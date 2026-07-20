@@ -1,33 +1,79 @@
+<h1 align="center">
+  <img src="https://raw.githubusercontent.com/yjdudeplz-web/deep-live-cam-chrome/main/media/demo.gif" width="200" alt="🎭">
+</h1>
+
 <h1 align="center">Deep-Live-Cam Chrome Edition</h1>
 
 <p align="center">
+  <b>🎭 Real-time face swap for everyone. Works on Chrome OS, low-end devices, and all video chat sites.</b>
+</p>
+
+<p align="center">
   <a href="https://github.com/yjdudeplz-web/deep-live-cam-chrome/stargazers">
-    <img src="https://img.shields.io/github/stars/yjdudeplz-web/deep-live-cam-chrome?style=flat-square&logo=github" alt="Stars">
+    <img src="https://img.shields.io/github/stars/yjdudeplz-web/deep-live-cam-chrome?style=for-the-badge&logo=github" alt="Stars">
   </a>
-  <a href="https://github.com/yjdudeplz-web/deep-live-cam-chrome/releases">
-    <img src="https://img.shields.io/github/v/release/yjdudeplz-web/deep-live-cam-chrome?include_prereleases&style=flat-square" alt="Release">
+  <a href="https://github.com/yjdudeplz-web/deep-live-cam-chrome/releases/latest">
+    <img src="https://img.shields.io/github/v/release/yjdudeplz-web/deep-live-cam-chrome?style=for-the-badge&logo=github" alt="Release">
   </a>
   <a href="https://github.com/yjdudeplz-web/deep-live-cam-chrome/issues">
-    <img src="https://img.shields.io/github/issues/yjdudeplz-web/deep-live-cam-chrome?style=flat-square" alt="Issues">
+    <img src="https://img.shields.io/github/issues/yjdudeplz-web/deep-live-cam-chrome?style=for-the-badge" alt="Issues">
   </a>
   <a href="https://github.com/yjdudeplz-web/deep-live-cam-chrome/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/yjdudeplz-web/deep-live-cam-chrome?style=flat-square" alt="License">
+    <img src="https://img.shields.io/github/license/yjdudeplz-web/deep-live-cam-chrome?style=for-the-badge" alt="License">
   </a>
 </p>
 
 <p align="center">
-  🎭 Real-time face swap optimized for Chrome OS with virtual camera support
+  <a href="https://github.com/yjdudeplz-web/deep-live-cam-chrome/releases/latest">
+    <img src="https://img.shields.io/badge/Download-Extension-34a853?style=for-the-badge&logo=google-chrome" alt="Download">
+  </a>
 </p>
 
+---
+
+## ⭐ Why You'll Love This
+
+| Feature | Description |
+|---------|-------------|
+| 🎭 **Real-Time Face Swap** | Swap your face instantly with just one image |
+| 📹 **Virtual Camera** | Works on Omegle, OmeTV, and more |
+| 🚀 **Chrome OS Ready** | Optimized for low-end devices |
+| 💾 **Low Memory** | Works on 2-4GB RAM devices |
+| 🔒 **Privacy First** | All processing happens locally |
+| ⭐ **Easy to Use** | One-click face swap |
+
+---
+
+## 💬 Works On
+
 <p align="center">
-  <a href="https://github.com/yjdudeplz-web/deep-live-cam-chrome#-features">Features</a>
-  •
-  <a href="https://github.com/yjdudeplz-web/deep-live-cam-chrome#-installation">Installation</a>
-  •
-  <a href="https://github.com/yjdudeplz-web/deep-live-cam-chrome#-usage">Usage</a>
-  •
-  <a href="https://github.com/yjdudeplz-web/deep-live-cam-chrome#-support-this-project">Support</a>
+  <img src="https://img.shields.io/badge/Omegle-💬-ff4444?style=for-the-badge" alt="Omegle">
+  <img src="https://img.shields.io/badge/OmeTV-📹-4dc3ff?style=for-the-badge" alt="OmeTV">
+  <img src="https://img.shields.io/badge/ChatRandom-🎲-6f42c1?style=for-the-badge" alt="ChatRandom">
+  <img src="https://img.shields.io/badge/Tinychat-💬-00a98f?style=for-the-badge" alt="Tinychat">
 </p>
+
+---
+
+## ⚡ Quick Start
+
+```bash
+# 1. Download the latest release
+# 2. Extract the zip file
+
+# 3. Open Chrome → chrome://extensions
+# 4. Enable Developer Mode
+# 5. Click "Load unpacked"
+# 6. Select the chrome-extension folder
+
+# 7. Click the extension icon
+# 8. Select a face image
+# 9. Click "Start Face Swap"!
+```
+
+---
+
+## ✨ Features
 
 <p align="center">
   Real-time face swap and video deepfake with a single click and only a single image.
