@@ -1,0 +1,53 @@
+# Deep-Live-Cam Chrome OS / Crostini Dockerfile
+# Optimized for Chrome OS Linux container (Crostini)
+
+FROM python:3.11-slim
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV CHROMEOS=1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements
+COPY requirements-chrome.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements-chrome.txt
+
+# Copy application files
+COPY modules/ ./modules/
+COPY modules/processors/ ./modules/processors/
+COPY run.py .
+COPY tkinter_fix.py .
+
+# Create models directory
+RUN mkdir -p models
+
+# Download models (optional - can be done at runtime)
+# Uncomment the following to download models during build
+# RUN apt-get update && apt-get install -y wget && \
+#     wget -O models/inswapper_128_fp16.onnx \
+#         https://huggingface.co/hacksider/deep-live-cam/resolve/main/inswapper_128_fp16.onnx && \
+#     wget -O models/GFPGANv1.4.onnx \
+#         https://huggingface.co/hacksider/deep-live-cam/resolve/main/GFPGANv1.4.onnx && \
+#     rm -rf /var/lib/apt/lists/*
+
+# Expose port for web interface (if using web mode)
+EXPOSE 8765
+
+# Run the application
+CMD ["python", "run.py"]

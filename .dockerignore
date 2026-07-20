@@ -1,0 +1,50 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Media files (large)
+media/*.mp4
+media/*.mov
+media/*.avi
+
+# Models (download separately)
+models/*.onnx
+models/*.pth
+models/*.pth.tar
+
+# Documentation
+*.md
+!README.md
+LICENSE
+
+# Chrome extension (not needed in Docker)
+chrome-extension/
+
+# Tests
+tests/
+test/
+
+# Temp files
+*.tmp
+*.temp
+temp/

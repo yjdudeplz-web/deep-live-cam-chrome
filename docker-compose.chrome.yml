@@ -1,0 +1,36 @@
+# Deep-Live-Cam Chrome OS - Docker Compose
+# Optimized for Chrome OS Crostini containers
+
+version: '3.8'
+
+services:
+  deep-live-cam:
+    build:
+      context: .
+      dockerfile: Dockerfile.chrome
+    image: deep-live-cam-chrome:latest
+    container_name: deep-live-cam
+    environment:
+      - DISPLAY=:0
+      - CHROMEOS=1
+    volumes:
+      # Mount models directory for persistence
+      - ./models:/app/models
+      # Mount media directory for output
+      - ./media:/app/media
+    devices:
+      # Access to camera (if available)
+      - /dev/video0:/dev/video0
+    ports:
+      - "8765:8765"  # Web interface port
+    shm_size: '2gb'  # Shared memory for video processing
+    restart: unless-stopped
+    # CPU and memory limits for Chrome OS
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 2G
+        reservations:
+          cpus: '2'
+          memory: 1G

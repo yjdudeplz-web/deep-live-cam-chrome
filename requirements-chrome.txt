@@ -1,0 +1,38 @@
+# Deep-Live-Cam Chrome OS - Requirements
+# Optimized for low-end Chrome hardware devices with NAND storage
+
+# Core dependencies - minimal set for Chrome OS
+numpy>=1.23.5,<2
+typing-extensions>=4.8.0
+
+# OpenCV - use headless version for server environments
+opencv-python-headless==4.10.0.84
+cv2_enumerate_cameras==1.1.15
+
+# ONNX Runtime - CPU optimized for Chrome
+onnxruntime==1.18.0
+
+# InsightFace for face analysis
+insightface==0.7.3
+
+# Utilities
+psutil==5.9.8
+pillow==12.1.1
+tqdm>=4.5.0
+
+# TensorFlow Lite for WebAssembly support
+# Note: This is optional - used when running in Pyodide/WASM environment
+# tensorflow-cpu>=2.15.0
+
+# Model compression utilities
+onnxruntime-tools>=1.15.0
+
+# NSFW detection (optional, can be disabled)
+opennsfw2==0.10.2
+protobuf==4.25.1
+
+# WebAssembly/Pyodide specific
+# pyodide>=0.24.0  # Uncomment for Pyodide deployment
+
+# Chrome extension specific
+# websockets>=12.0  # For streaming mode
