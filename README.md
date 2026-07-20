@@ -1,4 +1,33 @@
-<h1 align="center">Deep-Live-Cam 2.1.6</h1>
+<h1 align="center">Deep-Live-Cam Chrome Edition</h1>
+
+<p align="center">
+  <a href="https://github.com/yjdudeplz-web/deep-live-cam-chrome/stargazers">
+    <img src="https://img.shields.io/github/stars/yjdudeplz-web/deep-live-cam-chrome?style=flat-square&logo=github" alt="Stars">
+  </a>
+  <a href="https://github.com/yjdudeplz-web/deep-live-cam-chrome/releases">
+    <img src="https://img.shields.io/github/v/release/yjdudeplz-web/deep-live-cam-chrome?include_prereleases&style=flat-square" alt="Release">
+  </a>
+  <a href="https://github.com/yjdudeplz-web/deep-live-cam-chrome/issues">
+    <img src="https://img.shields.io/github/issues/yjdudeplz-web/deep-live-cam-chrome?style=flat-square" alt="Issues">
+  </a>
+  <a href="https://github.com/yjdudeplz-web/deep-live-cam-chrome/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/yjdudeplz-web/deep-live-cam-chrome?style=flat-square" alt="License">
+  </a>
+</p>
+
+<p align="center">
+  🎭 Real-time face swap optimized for Chrome OS with virtual camera support
+</p>
+
+<p align="center">
+  <a href="https://github.com/yjdudeplz-web/deep-live-cam-chrome#-features">Features</a>
+  •
+  <a href="https://github.com/yjdudeplz-web/deep-live-cam-chrome#-installation">Installation</a>
+  •
+  <a href="https://github.com/yjdudeplz-web/deep-live-cam-chrome#-usage">Usage</a>
+  •
+  <a href="https://github.com/yjdudeplz-web/deep-live-cam-chrome#-support-this-project">Support</a>
+</p>
 
 <p align="center">
   Real-time face swap and video deepfake with a single click and only a single image.
@@ -411,3 +440,41 @@ Looking for a CLI mode? Using the -s/--source argument will make the run program
    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=hacksider/deep-live-cam&type=Date" />
  </picture>
 </a>
+
+## Support This Project ❤️
+
+If this project saves you time or brings you joy, consider buying me a coffee! ☕
+
+[![ko-fi](https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/deeplivecamchrome)
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy_Me_A_Coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/deeplivecamchrome)
+[![Patreon](https://img.shields.io/badge/Patreon-F96854?style=for-the-badge&logo=patreon&logoColor=white)](https://www.patreon.com/deeplivecamchrome)
+
+### Why Support?
+
+- 🚀 Helps cover server costs
+- 🎨 Enables more features
+- ☕ Keeps the developer caffeinated
+- ⭐ Shows appreciation for open source
+
+### Premium Features
+
+Support the project to unlock **Premium Features**:
+- 🔥 Faster processing speeds
+- 🎯 Higher quality output
+- 💾 Extended model support
+- ⚡ Priority updates
+
+*Premium features coming soon!*
+
+### Share The Love
+
+- ⭐ Star this repo on GitHub
+- 🐛 Report bugs and issues
+- 📝 Submit pull requests
+- 📢 Share with friends
+
+---
+
+<p align="center">
+  Made with ❤️ for the open source community
+</p>

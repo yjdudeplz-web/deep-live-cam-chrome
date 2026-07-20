@@ -1,0 +1,156 @@
+name: Ad Revenue & Analytics
+
+on:
+  schedule:
+    # Run weekly on Sunday at midnight
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+    inputs:
+      period:
+        description: 'Time period'
+        required: true
+        default: 'weekly'
+
+jobs:
+  analytics:
+    name: Repository Analytics
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Generate Analytics Report
+        id: analytics
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: stars } = await github.rest.activity.listStargazersForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            
+            const { data: forks } = await github.rest.repos.listForks({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            
+            const { data: traffic } = await github.rest.repos.getViewsTraffic({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            
+            const report = {
+              stars: stars.length,
+              forks: forks.length,
+              views: traffic.count,
+              uniqueViews: traffic.uniques,
+              topReferrers: traffic.referrers?.slice(0, 5) || [],
+              popularPaths: traffic.paths?.slice(0, 5) || [],
+              timestamp: new Date().toISOString()
+            };
+            
+            console.log('Analytics Report:', JSON.stringify(report, null, 2));
+            
+            // Save to workflow summary
+            core.summary
+              .addHeading('Repository Analytics')
+              .addTable([
+                [{data: 'Metric', header: true}, {data: 'Value', header: true}],
+                ['Stars', report.stars],
+                ['Forks', report.forks],
+                ['Views', report.views],
+                ['Unique Views', report.uniqueViews]
+              ])
+              .addRaw(`\nGenerated at: ${report.timestamp}`);
+            
+            return report;
+
+      - name: Create Issue with Weekly Stats
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const stats = {
+              stars: context.payload.workflow_run?.runners || 0
+            };
+            
+            const issueBody = `
+            # 📊 Weekly Analytics Report
+            Generated: ${new Date().toLocaleString()}
+            
+            ## Summary
+            - ⭐ Stars: ${stats.stars || 0}
+            - 🍴 Forks: ${stats.forks || 0}
+            
+            ## Actions Taken
+            - [ ] Review top referrers
+            - [ ] Check popular content
+            - [ ] Update documentation if needed
+            
+            *This report was automatically generated.*
+            `;
+            
+            // Only create issue on schedule (not manual dispatch)
+            if (context.eventName === 'schedule') {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `📊 Weekly Stats - ${new Date().toISOString().split('T')[0]}`,
+                body: issueBody,
+                labels: ['analytics', 'weekly-report']
+              });
+            }
+
+  sponsors:
+    name: Sponsor Dashboard
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Check Sponsor Status
+        run: |
+          echo "Checking sponsor dashboard..."
+          # Add your sponsor tracking logic here
+          # - Ko-fi orders
+          # - Buy Me a Coffee supporters  
+          # - Patreon members
+          echo "Sponsor features:"
+          echo "- Premium users: 0"
+          echo "- Total raised: $0"
+          
+      - name: Update Sponsor Badge
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Update a pinned gist with sponsor count
+            const gistId = process.env.SPONSOR_GIST_ID;
+            if (gistId) {
+              console.log('Updating sponsor gist...');
+            }
+            
+  insights:
+    name: Generate Insights
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Generate Insights Report
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pulls } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'all'
+            });
+            
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'all'
+            });
+            
+            const openIssues = issues.filter(i => !i.pull_request);
+            const closedIssues = issues.filter(i => !i.pull_request && i.state === 'closed');
+            
+            console.log('Insights:');
+            console.log('- Open Issues:', openIssues.length);
+            console.log('- Closed Issues:', closedIssues.length);
+            console.log('- Open PRs:', pulls.filter(p => p.state === 'open').length);
+            console.log('- Merged PRs:', pulls.filter(p => p.merged_at !== null).length);
