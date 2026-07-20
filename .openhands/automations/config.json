@@ -1,0 +1,55 @@
+{
+  "version": "1.0",
+  "automations": [
+    {
+      "name": "Issue Triage",
+      "description": "Automatically analyze and label new issues",
+      "trigger": {
+        "type": "event",
+        "event": "issues.opened"
+      },
+      "file": "issue-triage.md",
+      "enabled": true,
+      "filters": {}
+    },
+    {
+      "name": "PR Review",
+      "description": "Auto-review PRs when labeled with needs-review",
+      "trigger": {
+        "type": "event",
+        "event": "pull_request.labeled"
+      },
+      "file": "pr-review.md",
+      "enabled": true,
+      "filters": {
+        "label": "needs-review"
+      }
+    },
+    {
+      "name": "Weekly Maintenance",
+      "description": "Weekly repository health check and cleanup",
+      "trigger": {
+        "type": "cron",
+        "schedule": "0 9 * * 1"
+      },
+      "file": "weekly-maintenance.md",
+      "enabled": true,
+      "filters": {}
+    }
+  ],
+  "notifications": {
+    "on_failure": {
+      "issue_comment": true
+    },
+    "on_success": {
+      "issue_comment": false
+    }
+  },
+  "settings": {
+    "max_issues_to_process": 10,
+    "max_prs_to_process": 10,
+    "require_approval": false,
+    "auto_close_stale_days": 60,
+    "stale_warning_days": 30
+  }
+}

@@ -36,11 +36,58 @@ deep-live-cam-chrome/
 │   ├── nand_optimize.py    # NAND optimizations
 │   ├── adaptive_quality.py  # Auto quality settings
 │   └── model_compress.py    # Model compression
+├── .github/                  # GitHub workflows and templates
+│   ├── workflows/           # CI/CD pipelines
+│   │   ├── ci.yml          # Linting and tests
+│   │   ├── test.yml        # Multi-platform testing
+│   │   ├── docker.yml      # Docker builds
+│   │   ├── security.yml    # Security scanning
+│   │   ├── dependencies.yml # Dependency updates
+│   │   ├── release.yml     # Release automation
+│   │   └── ads.yml         # Ad revenue tracking
+│   └── ISSUE_TEMPLATE/    # Issue templates
+├── .openhands/              # OpenHands automations
+│   ├── agents/              # Autonomous agents
+│   │   ├── feature-developer.md
+│   │   ├── bug-fixer.md
+│   │   └── documentation.md
+│   └── automations/         # Triggered automations
+│       ├── issue-triage.md
+│       ├── pr-review.md
+│       └── weekly-maintenance.md
 ├── requirements-chrome.txt  # Chrome dependencies
 ├── Dockerfile.chrome        # Docker for Crostini
 ├── docker-compose.chrome.yml
 └── README-CHROME.md       # Chrome-specific docs
 ```
+
+## GitHub Actions Workflows
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `ci.yml` | Push/PR | Linting with ruff |
+| `test.yml` | Push/PR | Multi-platform tests (Linux, macOS, Windows) |
+| `docker.yml` | Push/Tags | Docker image build & publish |
+| `security.yml` | Schedule | Vulnerability scanning, CodeQL |
+| `dependencies.yml` | Weekly | Auto-update dependencies |
+| `release.yml` | Tags | Create releases with changelog |
+| `promote.yml` | Release | Social media announcements |
+
+## OpenHands Automations
+
+| Automation | Trigger | Purpose |
+|------------|---------|---------|
+| `issue-triage.md` | Issue opened | Auto-label and analyze issues |
+| `pr-review.md` | PR labeled | Auto-review code changes |
+| `weekly-maintenance.md` | Weekly cron | Repository health checks |
+
+## Autonomous Agents
+
+| Agent | Purpose | Trigger |
+|-------|---------|---------|
+| `feature-developer.md` | Implement features | Issue labeled `feature-request` |
+| `bug-fixer.md` | Fix bugs | Issue labeled `bug` |
+| `documentation.md` | Update docs | PR merged |
 
 ## Commands
 
@@ -83,3 +130,9 @@ git commit -m "feat: description"
 git push -u origin your-branch
 # Create PR on GitHub
 ```
+
+## CI/CD Pipeline
+1. **Push**: Run linting and tests
+2. **PR**: Multi-platform tests + security scan
+3. **Merge**: Build Docker image + publish
+4. **Release**: Generate changelog + publish release
