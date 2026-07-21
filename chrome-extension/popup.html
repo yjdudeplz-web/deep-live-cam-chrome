@@ -7,74 +7,75 @@
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <div class="container">
-    <header>
+  <div class="container" role="main">
+    <header role="banner">
       <div class="header-brand">
-        <span class="logo">🎭</span>
+        <span class="logo" role="img" aria-label="Mask icon">🎭</span>
         <div>
           <h1>Deep-Live-Cam</h1>
-          <span class="badge">Chrome Edition v2.1.6</span>
+          <span class="badge">Chrome v2.1.6</span>
         </div>
       </div>
     </header>
 
-    <section id="status-section" class="card">
-      <h2>📊 Status</h2>
-      <div class="status-grid">
-        <div class="status-item">
+    <section id="status-section" class="card" aria-labelledby="status-title">
+      <h2 id="status-title">📊 Status</h2>
+      <div class="status-grid" role="list">
+        <div class="status-item" role="listitem">
           <span class="label">🎯 Face Detection</span>
-          <span id="models-status" class="value loading">Loading...</span>
+          <span id="models-status" class="value loading" aria-live="polite">Loading...</span>
         </div>
-        <div class="status-item">
+        <div class="status-item" role="listitem">
           <span class="label">💻 Device Profile</span>
-          <span id="device-profile" class="value">Detecting...</span>
+          <span id="device-profile" class="value" aria-live="polite">Detecting...</span>
         </div>
-        <div class="status-item">
+        <div class="status-item" role="listitem">
           <span class="label">🧠 RAM</span>
           <span id="memory-info" class="value">-</span>
         </div>
       </div>
     </section>
 
-    <section id="quick-start" class="card">
-      <h2>🚀 Quick Start - Live Deepfake in 3 Clicks</h2>
-      <div class="quick-steps">
-        <div class="step">1️⃣ Select a face image</div>
-        <div class="step">2️⃣ Choose your camera</div>
-        <div class="step">3️⃣ Press LIVE!</div>
+    <section id="quick-start" class="card" aria-labelledby="quickstart-title">
+      <h2 id="quickstart-title">🚀 Quick Start - Live Face Swap</h2>
+      <div class="quick-steps" role="list">
+        <div class="step" role="listitem">1️⃣ Select a face image</div>
+        <div class="step" role="listitem">2️⃣ Choose your camera</div>
+        <div class="step" role="listitem">3️⃣ Press LIVE!</div>
       </div>
-      <button id="open-face-swap-btn" class="btn primary btn-large">
+      <button id="open-face-swap-btn" class="btn primary btn-large" aria-label="Open face swap application">
         🎥 Open Face Swap
       </button>
     </section>
 
-    <section class="card">
-      <h2>💬 Troll Mode - Live on Video Chat</h2>
+    <section class="card" aria-labelledby="troll-title">
+      <h2 id="troll-title">💬 Video Chat - Real-time</h2>
       <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">
         Surprise people on video chat sites with real-time face swap!
       </p>
-      <div class="chat-sites">
-        <button data-site="omegle" class="btn site-btn" style="background: linear-gradient(135deg, #4CAF50, #45a049);">
+      <div class="chat-sites" role="group" aria-label="Video chat platforms">
+        <button data-site="omegle" class="btn site-btn" style="background: linear-gradient(135deg, #4CAF50, #45a049);" aria-label="Start on Omegle">
           💬 Omegle
         </button>
-        <button data-site="ometv" class="btn site-btn" style="background: linear-gradient(135deg, #2196F3, #1976D2);">
+        <button data-site="ometv" class="btn site-btn" style="background: linear-gradient(135deg, #2196F3, #1976D2);" aria-label="Start on OmeTV">
           📹 OmeTV
         </button>
-        <button data-site="chatrandom" class="btn site-btn" style="background: linear-gradient(135deg, #9C27B0, #7B1FA2);">
+        <button data-site="chatrandom" class="btn site-btn" style="background: linear-gradient(135deg, #9C27B0, #7B1FA2);" aria-label="Start on ChatRandom">
           🎲 ChatRandom
         </button>
       </div>
     </section>
 
-    <section id="settings-section" class="card">
-      <h2>⚙️ Settings</h2>
+    <section id="settings-section" class="card" aria-labelledby="settings-title">
+      <h2 id="settings-title">⚙️ Settings</h2>
       <div class="setting-group">
         <label for="quality-select">🎯 Quality Mode</label>
-        <select id="quality-select">
+        <select id="quality-select" aria-describedby="quality-desc">
           <option value="performance">⚡ Performance (480p, 10fps)</option>
           <option value="balanced" selected>⚖️ Balanced (720p, 15fps)</option>
           <option value="quality">✨ Quality (1080p, 30fps)</option>
         </select>
+        <span id="quality-desc" class="visually-hidden">Adjusts quality based on your device</span>
       </div>
       <div class="setting-group">
         <label for="resolution-select">📐 Max Resolution</label>
@@ -93,8 +94,9 @@
         </select>
       </div>
       <div class="setting-group checkbox-group">
-        <input type="checkbox" id="face-enhancer-toggle">
-        <label for="face-enhancer-toggle">✨ Face Enhancer (uses more memory)</label>
+        <input type="checkbox" id="face-enhancer-toggle" aria-describedby="enhancer-desc">
+        <label for="face-enhancer-toggle">✨ Face Enhancer</label>
+        <span id="enhancer-desc" class="helper-text">Uses more memory for better quality</span>
       </div>
       <div class="setting-group checkbox-group">
         <input type="checkbox" id="cache-toggle" checked>
@@ -102,24 +104,24 @@
       </div>
     </section>
 
-    <section id="download-section" class="card">
-      <h2>📥 AI Models</h2>
+    <section id="download-section" class="card" aria-labelledby="download-title">
+      <h2 id="download-title">📥 AI Models</h2>
       <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">
-        Download AI models for face detection and swapping
+        Download AI models for face detection and swapping (Mini version)
       </p>
-      <div id="download-progress" class="progress-container hidden">
+      <div id="download-progress" class="progress-container hidden" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
         <div class="progress-bar">
           <div id="progress-fill" class="progress-fill"></div>
         </div>
         <span id="progress-text" class="progress-text">0%</span>
       </div>
-      <button id="download-btn" class="btn secondary">
+      <button id="download-btn" class="btn secondary" aria-label="Download AI models">
         ⬇️ Download Models
       </button>
     </section>
 
-    <footer>
-      <p>Based on <a href="https://github.com/hacksider/Deep-Live-Cam" target="_blank">Deep-Live-Cam</a></p>
+    <footer role="contentinfo">
+      <p>Based on <a href="https://github.com/hacksider/Deep-Live-Cam" target="_blank" rel="noopener noreferrer">Deep-Live-Cam</a></p>
       <p style="font-size: 11px;">Optimized for Chrome OS • NAND Storage Support</p>
     </footer>
   </div>
