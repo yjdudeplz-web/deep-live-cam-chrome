@@ -100,6 +100,39 @@ git clone https://github.com/yjdudeplz-web/deep-live-cam-chrome.git
 
 ---
 
+## 📦 Chrome Extension Format
+
+This extension follows the standard **Chrome Extension (Manifest V3)** format:
+
+```
+deep-live-cam-extension/
+├── manifest.json       # ✅ Core configuration (Manifest V3)
+├── popup.html         # ✅ Extension popup UI
+├── popup.js           # ✅ Popup logic
+├── popup.css          # ✅ Popup styles
+├── service-worker.js   # ✅ Background service worker
+├── content-script.js  # ✅ Content script for video chat sites
+├── face-swap.html     # ✅ Main face swap interface
+├── icons/             # ✅ Extension icons
+│   ├── icon16.png
+│   ├── icon48.png
+│   ├── icon128.png
+│   └── icon256.png
+└── [other JS/CSS files]
+```
+
+### manifest.json Requirements ✅
+
+| Field | Value | Status |
+|-------|-------|--------|
+| manifest_version | 3 | ✅ |
+| name | "Deep-Live-Cam Chrome" | ✅ |
+| version | "2.1.6" | ✅ |
+| icons | PNG format | ✅ |
+| permissions | Minimal | ✅ |
+
+---
+
 ## ✨ Features
 
 <p align="center">
