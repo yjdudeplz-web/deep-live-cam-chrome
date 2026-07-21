@@ -17,7 +17,10 @@ const elements = {
   progressFill: document.getElementById('progress-fill'),
   progressText: document.getElementById('progress-text'),
   openAppBtn: document.getElementById('open-face-swap-btn'),
-  openSettingsBtn: document.getElementById('open-settings-btn')
+  openSettingsBtn: document.getElementById('open-settings-btn'),
+  fpsDisplay: document.getElementById('fps-display'),
+  memoryDisplay: document.getElementById('memory-display'),
+  facesDisplay: document.getElementById('faces-display')
 };
 
 // Device profiles for display
@@ -231,6 +234,47 @@ function setupEventListeners() {
 
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', init);
+
+// Stats update interval
+let statsInterval = null;
+
+/**
+ * Start updating performance stats
+ */
+async function startStatsUpdates() {
+  if (statsInterval) return;
+  
+  statsInterval = setInterval(async () => {
+    try {
+      const stats = await chrome.runtime.sendMessage({ action: 'getPerformanceStats' });
+      if (stats && stats.lastSample) {
+        elements.fpsDisplay.textContent = stats.lastSample.fps || '--';
+        elements.memoryDisplay.textContent = stats.lastSample.memory 
+          ? `${Math.round(stats.lastSample.memory / 1024 / 1024)}MB` 
+          : '--';
+        elements.facesDisplay.textContent = stats.lastSample.faces || '--';
+      }
+    } catch (e) {
+      // Ignore errors
+    }
+  }, 2000);
+}
+
+/**
+ * Stop updating stats
+ */
+function stopStatsUpdates() {
+  if (statsInterval) {
+    clearInterval(statsInterval);
+    statsInterval = null;
+  }
+}
+
+// Update stats when popup opens
+startStatsUpdates();
+
+// Stop when popup closes
+window.addEventListener('unload', stopStatsUpdates);
 
 // Add slideUp animation
 const style = document.createElement('style');
