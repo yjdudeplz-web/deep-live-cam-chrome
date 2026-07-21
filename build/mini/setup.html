@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Setup - Deep-Live-Cam Chrome</title>
+  <style>
+    :root {
+      --primary: #4285f4;
+      --success: #34a853;
+      --bg: #ffffff;
+      --bg-secondary: #f8f9fa;
+      --text: #202124;
+      --text-secondary: #5f6368;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .setup-card {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .setup-card h2 {
+      font-size: 18px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .checklist {
+      list-style: none;
+    }
+
+    .checklist li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .checklist .status {
+      font-size: 20px;
+    }
+
+    .checklist .status.pending { color: var(--text-secondary); }
+    .checklist .status.done { color: var(--success); }
+
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔧 Deep-Live-Cam Setup</h1>
+
+  <div class="setup-card">
+    <h2>📋 Setup Checklist</h2>
+    <ul class="checklist">
+      <li>
+        <span class="status" id="step-1">⏳</span>
+        <span>Download AI Models (~300MB)</span>
+      </li>
+      <li>
+        <span class="status" id="step-2">⏳</span>
+        <span>Configure Device Settings</span>
+      </li>
+      <li>
+        <span class="status" id="step-3">⏳</span>
+        <span>Grant Camera Permission</span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="setup-card">
+    <h2>⚙️ Device Information</h2>
+    <div id="device-info">
+      <p>Detecting device capabilities...</p>
+    </div>
+  </div>
+
+  <div class="setup-card">
+    <h2>🚀 Quick Actions</h2>
+    <p style="margin-bottom: 16px;">Once setup is complete, you can start using Deep-Live-Cam!</p>
+    <a href="index.html" class="btn">Open Deep-Live-Cam</a>
+  </div>
+
+  <div class="footer">
+    <p>Deep-Live-Cam Chrome Edition v2.1.6</p>
+    <p>Optimized for Chrome OS with NAND storage support</p>
+  </div>
+
+  <script>
+    async function init() {
+      // Load device info
+      const caps = await chrome.runtime.sendMessage({ action: 'getCapabilities' });
+      const settings = await chrome.runtime.sendMessage({ action: 'getSettings' });
+      const modelsReady = await chrome.runtime.sendMessage({ action: 'checkModels' });
+
+      const deviceInfo = document.getElementById('device-info');
+      deviceInfo.innerHTML = `
+        <p><strong>Device Profile:</strong> ${caps.profile}</p>
+        <p><strong>Memory:</strong> ${caps.memory || '-'} GB</p>
+        <p><strong>CPU Cores:</strong> ${caps.cores || '-'}</p>
+        <p><strong>Recommended Resolution:</strong> ${settings.maxResolution || 720}p</p>
+        <p><strong>Recommended FPS:</strong> ${settings.frameRate || 15}</p>
+      `;
+
+      // Update checklist
+      if (modelsReady) {
+        document.getElementById('step-1').textContent = '✅';
+        document.getElementById('step-1').className = 'status done';
+      } else {
+        document.getElementById('step-1').textContent = '⚠️';
+      }
+
+      // Check camera permission
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        stream.getTracks().forEach(t => t.stop());
+        document.getElementById('step-3').textContent = '✅';
+        document.getElementById('step-3').className = 'status done';
+      } catch (e) {
+        document.getElementById('step-3').textContent = '⏳';
+      }
+
+      // Settings configured by default
+      document.getElementById('step-2').textContent = '✅';
+      document.getElementById('step-2').className = 'status done';
+    }
+
+    init();
+  </script>
+</body>
+</html>

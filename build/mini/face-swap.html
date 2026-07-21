@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#4285f4">
+  <title>Deep-Live-Cam - Virtual Camera Mode</title>
+  <link rel="manifest" href="manifest.json">
+  
+  <!-- Face-api.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.js"></script>
+  
+  <style>
+    :root {
+      --primary: #4285f4;
+      --bg: #0f0f23;
+      --bg-secondary: #1a1a2e;
+      --text: #eaeaea;
+      --text-secondary: #a0a0a0;
+      --success: #34a853;
+      --warning: #fbbc05;
+      --error: #ea4335;
+      --border: #2a2a4a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    h1 { font-size: 18px; font-weight: 700; }
+    .live-badge {
+      background: var(--error);
+      color: white;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+
+    .main-content {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 320px;
+    }
+
+    .video-section {
+      background: #000;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    #preview-canvas, #camera-video, #processing-canvas {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    #processing-canvas, #camera-video { display: none; }
+
+    .status-overlay {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .status-badge {
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(10px);
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-badge.live { background: rgba(234, 67, 53, 0.9); animation: pulse 1.5s infinite; }
+    .status-badge.ready { background: rgba(52, 168, 83, 0.9); }
+
+    .sidebar {
+      background: var(--bg-secondary);
+      border-left: 1px solid var(--border);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel { padding: 16px; border-bottom: 1px solid var(--border); }
+    .panel:last-child { border-bottom: none; }
+
+    .panel-title {
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .source-image {
+      width: 100%;
+      aspect-ratio: 1;
+      background: var(--bg);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      overflow: hidden;
+      border: 2px dashed var(--border);
+      transition: all 0.3s;
+      position: relative;
+    }
+
+    .source-image:hover { border-color: var(--primary); transform: scale(1.02); }
+    .source-image img { width: 100%; height: 100%; object-fit: cover; }
+
+    .source-placeholder {
+      text-align: center;
+      color: var(--text-secondary);
+    }
+
+    .source-placeholder .icon { font-size: 48px; margin-bottom: 8px; }
+
+    .change-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .source-image:hover .change-overlay { opacity: 1; }
+
+    .quick-faces {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .quick-face {
+      aspect-ratio: 1;
+      background: var(--bg);
+      border-radius: 8px;
+      cursor: pointer;
+      overflow: hidden;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .quick-face:hover { border-color: var(--primary); transform: scale(1.1); }
+    .quick-face.selected { border-color: var(--success); }
+
+    select {
+      width: 100%;
+      padding: 8px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .setting-label { font-size: 13px; }
+
+    .toggle {
+      width: 44px;
+      height: 24px;
+      background: var(--bg);
+      border-radius: 12px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .toggle.active { background: var(--primary); }
+
+    .toggle::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.3s;
+    }
+
+    .toggle.active::after { transform: translateX(20px); }
+
+    .troll-sites { display: grid; gap: 8px; }
+
+    .troll-btn {
+      padding: 10px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s;
+    }
+
+    .troll-btn:hover { background: var(--border); border-color: var(--primary); }
+    .troll-btn .icon { font-size: 18px; }
+
+    .action-btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.3s;
+    }
+
+    .action-btn.start {
+      background: linear-gradient(135deg, #34a853 0%, #0f9d58 100%);
+      color: white;
+    }
+    .action-btn.start:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(52, 168, 83, 0.4); }
+    .action-btn.stop {
+      background: linear-gradient(135deg, #ea4335 0%, #c5221f 100%);
+      color: white;
+    }
+    .action-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.95);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      z-index: 1000;
+    }
+
+    .loading-overlay.hidden { display: none; }
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-text { font-size: 16px; color: var(--text); }
+    .loading-progress {
+      width: 200px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .loading-bar { height: 100%; background: var(--primary); width: 0; transition: width 0.3s; }
+
+    .cam-status {
+      background: rgba(52, 168, 83, 0.2);
+      border: 1px solid var(--success);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      font-size: 12px;
+    }
+
+    .cam-status .icon { font-size: 20px; }
+    .cam-status.error { background: rgba(234, 67, 53, 0.2); border-color: var(--error); }
+
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0;
+    }
+
+    .stat { text-align: center; }
+    .stat-value { font-size: 18px; font-weight: 700; color: var(--primary); }
+    .stat-label { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; }
+
+    @media (max-width: 800px) {
+      .main-content { grid-template-columns: 1fr; }
+      .sidebar { border-left: none; border-top: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <h1>🎭 Deep-Live-Cam</h1>
+      <span class="live-badge">VIRTUAL CAMERA</span>
+    </div>
+  </header>
+
+  <div class="main-content">
+    <div class="video-section">
+      <canvas id="preview-canvas"></canvas>
+      <video id="camera-video" autoplay playsinline muted></video>
+      <canvas id="processing-canvas"></canvas>
+
+      <div class="status-overlay">
+        <div class="status-badge" id="status-badge" style="display: none;">
+          <span>●</span>
+          <span>LIVE</span>
+        </div>
+        <div class="status-badge" id="engine-status">
+          <span>⏳</span>
+          <span id="engine-text">Initializing...</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar">
+      <div class="panel">
+        <div class="panel-title">👤 Source Face</div>
+        <div class="source-image" id="source-image">
+          <div class="source-placeholder">
+            <div class="icon">👤</div>
+            <p>Click to select</p>
+          </div>
+          <div class="change-overlay"><span>✨ Change</span></div>
+        </div>
+        <input type="file" id="source-input" accept="image/*" style="display: none;">
+
+        <div class="quick-faces">
+          <div class="quick-face" data-face="robot" title="Robot">🤖</div>
+          <div class="quick-face" data-face="celeb" title="Celebrity">⭐</div>
+          <div class="quick-face" data-face="cat" title="Cat">😺</div>
+          <div class="quick-face" data-face="dog" title="Dog">🐕</div>
+          <div class="quick-face" data-face="alien" title="Alien">👽</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">📷 Camera</div>
+        <select id="camera-select"><option value="">Select camera...</option></select>
+        <select id="resolution-select">
+          <option value="480">480p</option>
+          <option value="720" selected>720p</option>
+          <option value="1080">1080p</option>
+        </select>
+        <select id="fps-select">
+          <option value="15">15 FPS</option>
+          <option value="24" selected>24 FPS</option>
+          <option value="30">30 FPS</option>
+        </select>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">⚙️ Settings</div>
+        <div class="setting-row">
+          <span class="setting-label">Mirror</span>
+          <div class="toggle active" id="mirror-toggle"></div>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">Swap All Faces</span>
+          <div class="toggle" id="swapall-toggle"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">🎯 Troll Sites</div>
+        <div class="troll-sites">
+          <button class="troll-btn" data-site="omegle"><span class="icon">💬</span><span>Omegle</span></button>
+          <button class="troll-btn" data-site="ometv"><span class="icon">📹</span><span>OmeTV</span></button>
+          <button class="troll-btn" data-site="chatrandom"><span class="icon">🎲</span><span>ChatRandom</span></button>
+        </div>
+        <div class="cam-status" id="cam-status">
+          <div class="icon">🎥</div>
+          <div id="cam-status-text">Ready</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-value" id="fps-value">--</div>
+            <div class="stat-label">FPS</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" id="faces-value">0</div>
+            <div class="stat-label">Faces</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" id="faceswap-value">OFF</div>
+            <div class="stat-label">Swap</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="action-buttons">
+          <button class="action-btn start" id="start-btn">▶️ Start Face Swap</button>
+          <button class="action-btn stop" id="stop-btn" style="display: none;">⏹️ Stop</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text" id="loading-text">Initializing...</div>
+    <div class="loading-progress">
+      <div class="loading-bar" id="loading-bar"></div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================
+    // Deep-Live-Cam Face Swap Application
+    // ============================================
+
+    // Elements
+    const cameraVideo = document.getElementById('camera-video');
+    const previewCanvas = document.getElementById('preview-canvas');
+    const processingCanvas = document.getElementById('processing-canvas');
+    const previewCtx = previewCanvas.getContext('2d');
+    const processingCtx = processingCanvas.getContext('2d');
+
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const loadingText = document.getElementById('loading-text');
+    const loadingBar = document.getElementById('loading-bar');
+    const sourceImageEl = document.getElementById('source-image');
+    const sourceInput = document.getElementById('source-input');
+    const cameraSelect = document.getElementById('camera-select');
+    const startBtn = document.getElementById('start-btn');
+    const stopBtn = document.getElementById('stop-btn');
+    const statusBadge = document.getElementById('status-badge');
+    const engineStatus = document.getElementById('engine-status');
+    const engineText = document.getElementById('engine-text');
+    const camStatus = document.getElementById('cam-status');
+    const camStatusText = document.getElementById('cam-status-text');
+
+    const fpsValue = document.getElementById('fps-value');
+    const facesValue = document.getElementById('faces-value');
+    const faceswapValue = document.getElementById('faceswap-value');
+
+    // State
+    let isRunning = false;
+    let sourceImage = null;
+    let sourceImageElement = null;
+    let cameraStream = null;
+    let virtualStream = null;
+    let animationId = null;
+    let faceProcessor = null;
+    let lastFrameTime = 0;
+    let frameCount = 0;
+    let currentFps = 0;
+    let totalFramesProcessed = 0;
+    let errors = [];
+    let statsReportInterval = null;
+
+    // Settings
+    let settings = {
+      resolution: 720,
+      fps: 24,
+      mirror: true,
+      swapAll: false
+    };
+
+    // ============================================
+    // Initialization
+    // ============================================
+
+    async function init() {
+      showLoading('Loading face detection models...', 10);
+
+      // Initialize face processor
+      faceProcessor = new FaceSwapProcessor();
+
+      try {
+        await faceProcessor.initialize((text, progress) => {
+          showLoading(text, progress);
+        });
+
+        updateEngineStatus('ready', 'Face AI Ready');
+      } catch (error) {
+        console.error('Failed to initialize:', error);
+        updateEngineStatus('error', 'Init Failed');
+        // Continue anyway - can still show video
+      }
+
+      showLoading('Loading cameras...', 90);
+      await loadCameras();
+      showLoading('Ready!', 100);
+
+      await delay(500);
+      hideLoading();
+
+      setupEventListeners();
+    }
+
+    async function loadCameras() {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const cameras = devices.filter(d => d.kind === 'videoinput');
+
+        cameraSelect.innerHTML = '<option value="">Select camera...</option>';
+        cameras.forEach((cam, i) => {
+          const option = document.createElement('option');
+          option.value = cam.deviceId;
+          option.textContent = cam.label || `Camera ${i + 1}`;
+          cameraSelect.appendChild(option);
+        });
+
+        if (cameras.length > 0) {
+          cameraSelect.value = cameras[0].deviceId;
+        }
+      } catch (e) {
+        console.error('Failed to load cameras:', e);
+      }
+    }
+
+    function setupEventListeners() {
+      sourceImageEl.addEventListener('click', () => sourceInput.click());
+      sourceInput.addEventListener('change', handleSourceSelect);
+
+      document.getElementById('resolution-select').addEventListener('change', e => {
+        settings.resolution = parseInt(e.target.value);
+      });
+
+      document.getElementById('fps-select').addEventListener('change', e => {
+        settings.fps = parseInt(e.target.value);
+      });
+
+      document.getElementById('mirror-toggle').addEventListener('click', () => {
+        document.getElementById('mirror-toggle').classList.toggle('active');
+        settings.mirror = document.getElementById('mirror-toggle').classList.contains('active');
+      });
+
+      document.getElementById('swapall-toggle').addEventListener('click', () => {
+        document.getElementById('swapall-toggle').classList.toggle('active');
+        settings.swapAll = document.getElementById('swapall-toggle').classList.contains('active');
+        if (faceProcessor) faceProcessor.swapAllFaces = settings.swapAll;
+      });
+
+      document.querySelectorAll('.quick-face').forEach(btn => {
+        btn.addEventListener('click', () => selectQuickFace(btn.dataset.face));
+      });
+
+      document.querySelectorAll('.troll-btn').forEach(btn => {
+        btn.addEventListener('click', () => openTrollSite(btn.dataset.site));
+      });
+
+      startBtn.addEventListener('click', startSwap);
+      stopBtn.addEventListener('click', stopSwap);
+    }
+
+    // ============================================
+    // Source Face
+    // ============================================
+
+    function handleSourceSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        sourceImage = event.target.result;
+
+        // Create image element
+        sourceImageElement = new Image();
+        sourceImageElement.src = sourceImage;
+
+        sourceImageElement.onload = async () => {
+          sourceImageEl.innerHTML = `
+            <img src="${sourceImage}" alt="Source face">
+            <div class="change-overlay"><span>✨ Change</span></div>
+          `;
+
+          // Set source face in processor
+          if (faceProcessor) {
+            faceProcessor.setSourceImage(sourceImageElement);
+            try {
+              await faceProcessor.setSourceFace();
+              updateFaceswapStatus(true);
+              console.log('Source face detected and set!');
+            } catch (error) {
+              console.error('No face detected:', error);
+              alert('No face detected in the selected image. Please try another image.');
+            }
+          }
+        };
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function selectQuickFace(type) {
+      // Mark selected
+      document.querySelectorAll('.quick-face').forEach(b => b.classList.remove('selected'));
+      document.querySelector(`[data-face="${type}"]`).classList.add('selected');
+
+      // Quick presets - create emoji "face" (for demo)
+      const emojiCanvas = document.createElement('canvas');
+      emojiCanvas.width = 512;
+      emojiCanvas.height = 512;
+      const ctx = emojiCanvas.getContext('2d');
+
+      const emojis = {
+        robot: '🤖',
+        celeb: '⭐',
+        cat: '😺',
+        dog: '🐕',
+        alien: '👽'
+      };
+
+      ctx.fillStyle = '#1a1a2e';
+      ctx.fillRect(0, 0, 512, 512);
+      ctx.font = '400px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(emojis[type] || '👤', 256, 280);
+
+      sourceImageElement = new Image();
+      sourceImageElement.src = emojiCanvas.toDataURL();
+
+      sourceImageElement.onload = () => {
+        sourceImageEl.innerHTML = `
+          <img src="${sourceImageElement.src}" alt="Source face">
+          <div class="change-overlay"><span>✨ Change</span></div>
+        `;
+
+        if (faceProcessor) {
+          faceProcessor.setSourceImage(sourceImageElement);
+          // Quick faces work without face detection for demo
+          faceswapValue.textContent = 'ON';
+        }
+      };
+    }
+
+    // ============================================
+    // Camera & Streaming
+    // ============================================
+
+    async function startCamera() {
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            deviceId: cameraSelect.value ? { exact: cameraSelect.value } : undefined,
+            width: { ideal: settings.resolution },
+            height: { ideal: settings.resolution },
+            frameRate: { ideal: settings.fps }
+          },
+          audio: false
+        });
+
+        cameraVideo.srcObject = cameraStream;
+        await cameraVideo.play();
+
+        // Set canvas sizes
+        previewCanvas.width = cameraVideo.videoWidth || settings.resolution;
+        previewCanvas.height = cameraVideo.videoHeight || settings.resolution;
+        processingCanvas.width = previewCanvas.width;
+        processingCanvas.height = previewCanvas.height;
+
+        // Create virtual camera stream
+        virtualStream = previewCanvas.captureStream(settings.fps);
+
+        camStatus.classList.remove('error');
+        camStatusText.textContent = 'Virtual Camera Active';
+
+        return true;
+      } catch (e) {
+        console.error('Camera error:', e);
+        camStatus.classList.add('error');
+        camStatusText.textContent = 'Camera Error';
+        return false;
+      }
+    }
+
+    // ============================================
+    // Face Swap Processing
+    // ============================================
+
+    async function startSwap() {
+      if (!sourceImageElement) {
+        alert('Please select a source face image first!');
+        return;
+      }
+
+      showLoading('Starting face swap...', 50);
+
+      const cameraStarted = await startCamera();
+      if (!cameraStarted) {
+        hideLoading();
+        return;
+      }
+
+      hideLoading();
+
+      // Update UI
+      startBtn.style.display = 'none';
+      stopBtn.style.display = 'block';
+      statusBadge.style.display = 'flex';
+      statusBadge.classList.add('live');
+      isRunning = true;
+
+      // Start processing loop
+      processLoop();
+      
+      // Start background reporting (every 5 minutes)
+      startBackgroundReporting();
+    }
+
+    function processLoop() {
+      if (!isRunning) return;
+
+      const now = performance.now();
+      const targetDelay = 1000 / settings.fps;
+
+      if (now - lastFrameTime >= targetDelay) {
+        processFrame();
+
+        frameCount++;
+        if (frameCount >= 10) {
+          currentFps = Math.round(1000 / (now - lastFrameTime) * 10);
+          fpsValue.textContent = currentFps;
+          frameCount = 0;
+        }
+        lastFrameTime = now;
+      }
+
+      animationId = requestAnimationFrame(processLoop);
+    }
+
+    async function processFrame() {
+      if (!cameraVideo.videoWidth) return;
+
+      // Draw video frame
+      previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+
+      if (settings.mirror) {
+        previewCtx.save();
+        previewCtx.scale(-1, 1);
+        previewCtx.drawImage(cameraVideo, -previewCanvas.width, 0, previewCanvas.width, previewCanvas.height);
+        previewCtx.restore();
+      } else {
+        previewCtx.drawImage(cameraVideo, 0, 0, previewCanvas.width, previewCanvas.height);
+      }
+
+      // Apply face swap
+      if (faceProcessor && faceProcessor.sourceFace) {
+        try {
+          await faceProcessor.processFrame(cameraVideo, previewCanvas);
+        } catch (e) {
+          // Track errors
+          if (errors.length < 10) errors.push({ time: Date.now(), error: e.message });
+        }
+      }
+
+      // Update face count (simplified)
+      facesValue.textContent = faceProcessor?.sourceFace ? '1' : '0';
+      
+      // Track frame
+      totalFramesProcessed++;
+    }
+    
+    /**
+     * Report performance stats to background service worker
+     */
+    async function reportStatsToBackground() {
+      if (!isRunning) return;
+      
+      try {
+        // Get performance stats
+        const memory = performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1024 / 1024) : 0;
+        
+        const stats = {
+          timestamp: Date.now(),
+          fps: currentFps,
+          memory: memory,
+          framesProcessed: totalFramesProcessed,
+          resolution: `${previewCanvas.width}x${previewCanvas.height}`,
+          faceSwapActive: !!faceProcessor?.sourceFace,
+          errors: errors.slice(-5) // Last 5 errors
+        };
+        
+        // Send to service worker via message
+        chrome.runtime.sendMessage({
+          action: 'reportStats',
+          stats: stats
+        }).catch(() => {});
+        
+      } catch (e) {
+        console.error('Failed to report stats:', e);
+      }
+    }
+    
+    /**
+     * Start background reporting interval (every 5 minutes)
+     */
+    function startBackgroundReporting() {
+      // Report immediately
+      reportStatsToBackground();
+      
+      // Then every 5 minutes (300000ms)
+      statsReportInterval = setInterval(reportStatsToBackground, 5 * 60 * 1000);
+    }
+    
+    /**
+     * Stop background reporting
+     */
+    function stopBackgroundReporting() {
+      if (statsReportInterval) {
+        clearInterval(statsReportInterval);
+        statsReportInterval = null;
+      }
+    }
+
+    function stopSwap() {
+      isRunning = false;
+
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(t => t.stop());
+        cameraStream = null;
+      }
+
+      if (virtualStream) {
+        virtualStream.getTracks().forEach(t => t.stop());
+        virtualStream = null;
+      }
+
+      // Stop background reporting
+      stopBackgroundReporting();
+      
+      // Send final stats report
+      reportStatsToBackground();
+
+      startBtn.style.display = 'block';
+      stopBtn.style.display = 'none';
+      statusBadge.style.display = 'none';
+      fpsValue.textContent = '--';
+      facesValue.textContent = '0';
+      faceswapValue.textContent = 'OFF';
+
+      camStatus.classList.remove('error');
+      camStatusText.textContent = 'Ready';
+    }
+
+    // ============================================
+    // Troll Site Integration
+    // ============================================
+
+    function openTrollSite(site) {
+      if (!isRunning || !virtualStream) {
+        alert('Please start face swap first, then click the site button!');
+        return;
+      }
+
+      const urls = {
+        omegle: 'https://omegle.com/',
+        ometv: 'https://ometv.com/',
+        chatrandom: 'https://chatrandom.com/'
+      };
+
+      const url = urls[site];
+      if (!url) return;
+
+      // Open site in new tab
+      const newTab = window.open(url, '_blank');
+
+      if (newTab) {
+        // Try to inject script to use our virtual camera
+        setTimeout(() => {
+          try {
+            chrome.tabs.query({ active: true }, (tabs) => {
+              if (tabs[0]?.id) {
+                chrome.tabs.sendMessage(tabs[0].id, {
+                  action: 'useVirtualCamera',
+                  streamId: virtualStream?.id
+                }).catch(() => {});
+              }
+            });
+          } catch (e) {}
+        }, 2000);
+      }
+
+      alert(`🎭 Face swap is running!\n\nOpen ${site} in the new tab and allow camera access.\nYour swapped face will appear!`);
+    }
+
+    // ============================================
+    // UI Helpers
+    // ============================================
+
+    function showLoading(text, progress) {
+      loadingOverlay.classList.remove('hidden');
+      loadingText.textContent = text;
+      loadingBar.style.width = `${progress}%`;
+    }
+
+    function hideLoading() {
+      loadingOverlay.classList.add('hidden');
+    }
+
+    function delay(ms) {
+      return new Promise(r => setTimeout(r, ms));
+    }
+
+    function updateEngineStatus(status, text) {
+      engineText.textContent = text;
+      if (status === 'ready') {
+        engineStatus.querySelector('span').textContent = '✓';
+        engineStatus.classList.add('ready');
+      } else if (status === 'error') {
+        engineStatus.querySelector('span').textContent = '✗';
+        engineStatus.style.background = 'rgba(234, 67, 53, 0.9)';
+      }
+    }
+
+    function updateFaceswapStatus(active) {
+      faceswapValue.textContent = active ? 'ON' : 'OFF';
+      faceswapValue.style.color = active ? '#34a853' : '#a0a0a0';
+    }
+
+    // Start
+    init();
+  </script>
+</body>
+</html>

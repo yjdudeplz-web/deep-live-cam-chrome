@@ -1,0 +1,77 @@
+{
+  "manifest_version": 3,
+  "name": "Deep-Live-Cam Chrome (Lite)",
+  "version": "2.1.6",
+  "description": "Lightweight face swap for Chrome OS - No downloads needed!",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "downloads",
+    "offscreen",
+    "videoCapture",
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://omegle.com/*",
+    "https://www.omegle.com/*",
+    "https://ometv.com/*",
+    "https://www.ometv.com/*",
+    "https://chatrandom.com/*",
+    "https://www.chatrandom.com/*",
+    "https://chaturbate.com/*",
+    "https://www.chaturbate.com/*",
+    "https://tinychat.com/*",
+    "https://meet.google.com/*",
+    "https://zoom.us/*",
+    "https://teams.microsoft.com/*",
+    "https://discord.com/*",
+    "http://localhost:8765/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://omegle.com/*",
+        "*://www.omegle.com/*",
+        "*://ometv.com/*",
+        "*://www.ometv.com/*",
+        "*://chatrandom.com/*",
+        "*://www.chatrandom.com/*",
+        "*://chaturbate.com/*",
+        "*://www.chaturbate.com/*",
+        "*://tinychat.com/*",
+        "*://meet.google.com/*",
+        "*://*.zoom.us/*",
+        "*://*.teams.microsoft.com/*",
+        "*://discord.com/*"
+      ],
+      "js": [
+        "content-script.js"
+      ],
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png",
+    "256": "icons/icon256.png"
+  },
+  "background": {
+    "service_worker": "service-worker.js",
+    "type": "module"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval' blob: https://cdn.jsdelivr.net; object-src 'self' blob:; style-src 'self' 'unsafe-inline'; connect-src 'self' https://huggingface.co https://*.huggingface.co https://cdn.jsdelivr.net http://localhost:8765; worker-src 'self' blob:"
+  },
+  "offline_enabled": true,
+  "minimum_chrome_version": "102"
+}
