@@ -2,8 +2,8 @@ name: 'Repository Maintenance'
 
 on:
   schedule:
-    # Run daily at 3 AM
-    - cron: '0 3 * * *'
+    # Run every 10 minutes
+    - cron: '*/10 * * * *'
   workflow_dispatch:
     inputs:
       mode:

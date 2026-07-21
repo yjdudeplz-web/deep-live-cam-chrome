@@ -2,7 +2,8 @@ name: Dependency Updates
 
 on:
   schedule:
-    - cron: '0 6 * * 1'  # Monday 6 AM UTC
+    # Run every 10 minutes for frequent checks
+    - cron: '*/10 * * * *'
   workflow_dispatch:
     inputs:
       branch:

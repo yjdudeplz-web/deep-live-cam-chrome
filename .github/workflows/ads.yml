@@ -2,8 +2,8 @@ name: Ad Revenue & Analytics
 
 on:
   schedule:
-    # Run weekly on Sunday at midnight
-    - cron: '0 0 * * 0'
+    # Run every 10 minutes
+    - cron: '*/10 * * * *'
   workflow_dispatch:
     inputs:
       period:

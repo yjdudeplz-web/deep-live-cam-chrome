@@ -1,0 +1,130 @@
+name: 'Quick Monitor'
+
+on:
+  schedule:
+    # Run every 10 minutes
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  monitor:
+    name: 'System Monitor'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Check Repository Health'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const repo = context.repo;
+            
+            // Get open issues
+            const issues = await github.rest.issues.listForRepo({
+              owner: repo.owner,
+              repo: repo.repo,
+              state: 'open'
+            });
+            
+            // Get open PRs
+            const prs = await github.rest.pulls.listForRepo({
+              owner: repo.owner,
+              repo: repo.repo,
+              state: 'open'
+            });
+            
+            // Get recent commits
+            const commits = await github.rest.repos.listCommitsForRepo({
+              owner: repo.owner,
+              repo: repo.repo,
+              per_page: 5
+            });
+            
+            // Get workflows
+            const runs = await github.rest.actions.listWorkflowRunsForRepo({
+              owner: repo.owner,
+              repo: repo.repo,
+              per_page: 3
+            });
+            
+            console.log('## Quick Monitor Report');
+            console.log('');
+            console.log('### Activity');
+            console.log(`- Open Issues: ${issues.data.length}`);
+            console.log(`- Open PRs: ${prs.data.length}`);
+            console.log(`- Recent Commits: ${commits.data.length}`);
+            console.log('');
+            console.log('### Recent Commits');
+            commits.data.forEach(c => {
+              const date = new Date(c.commit.author.date).toLocaleDateString();
+              console.log(`- ${c.sha.slice(0,7)}: ${c.commit.message.split('\n')[0]} (${date})`);
+            });
+            console.log('');
+            console.log('### Workflow Status');
+            runs.data.workflow_runs.slice(0, 3).forEach(r => {
+              console.log(`- ${r.name}: ${r.conclusion || r.status}`);
+            });
+
+  check-failed-runs:
+    name: 'Check Failed Runs'
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - name: 'List Recent Failed Runs'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runs = await github.rest.actions.listWorkflowRunsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 20
+            });
+            
+            const failedRuns = runs.data.workflow_runs.filter(r => 
+              r.conclusion === 'failure'
+            );
+            
+            if (failedRuns.length > 0) {
+              console.log('⚠️ Recent Failed Workflow Runs:');
+              failedRuns.slice(0, 5).forEach(r => {
+                const date = new Date(r.created_at).toLocaleString();
+                console.log(`- ${r.name} (${date}): ${r.html_url}`);
+              });
+            } else {
+              console.log('✅ No failed workflow runs');
+            }
+
+  update-stats:
+    name: 'Update Stats'
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - name: 'Generate Stats'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const repo = await github.rest.repos.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            
+            const stats = {
+              stars: repo.data.stargazers_count,
+              forks: repo.data.forks_count,
+              subscribers: repo.data.subscribers_count,
+              openIssues: repo.data.open_issues_count,
+              language: repo.data.language,
+              lastUpdate: new Date().toISOString()
+            };
+            
+            console.log('## Repository Stats');
+            console.log('');
+            console.log('| Metric | Value |');
+            console.log('|--------|-------|');
+            console.log(`| ⭐ Stars | ${stats.stars} |`);
+            console.log(`| 🍴 Forks | ${stats.forks} |`);
+            console.log(`| 👀 Watchers | ${stats.subscribers} |`);
+            console.log(`| 📋 Open Issues | ${stats.openIssues} |`);
+            console.log(`| 💻 Language | ${stats.language} |`);
+            console.log(`| 🕐 Last Check | ${stats.lastUpdate} |`);
