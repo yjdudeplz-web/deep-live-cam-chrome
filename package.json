@@ -4,8 +4,10 @@
   "description": "Real-time face swap for Chrome OS - Works on Omegle, OmeTV, ChatRandom, Google Meet, Zoom, and more!",
   "main": "index.js",
   "scripts": {
-    "test": "node tests/test_manifest.js && node tests/test_face_swap_engine.js",
-    "test:watch": "node tests/test_manifest.js --watch",
+    "test": "bash tests/run-all.sh",
+    "test:manifest": "node tests/test_manifest.js",
+    "test:engine": "node tests/test_face_swap_engine.js",
+    "test:integration": "node tests/test_integration.js",
     "build": "python3 build/build.py",
     "lint": "eslint chrome-extension/*.js",
     "validate": "node tests/test_manifest.js",
