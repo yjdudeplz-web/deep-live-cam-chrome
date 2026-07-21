@@ -27,11 +27,10 @@ run_test() {
     fi
 }
 
-# Run manifest tests
+# Run all tests
 run_test "Manifest Tests" "tests/test_manifest.js"
-
-# Run face swap engine tests
 run_test "Face Swap Engine Tests" "tests/test_face_swap_engine.js"
+run_test "Integration Tests" "tests/test_integration.js"
 
 # Summary
 echo ""
