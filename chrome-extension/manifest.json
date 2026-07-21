@@ -2,19 +2,30 @@
   "manifest_version": 3,
   "name": "Deep-Live-Cam Chrome",
   "version": "2.1.6",
-  "description": "Real-time face swap for Chrome OS with virtual camera support for video chat sites",
+  "description": "Real-time face swap for Chrome OS - Works on Omegle, OmeTV, ChatRandom, Google Meet, Zoom, and more!",
   "permissions": [
     "activeTab",
     "storage",
     "downloads",
     "offscreen",
     "videoCapture",
-    "hostPermissions",
     "scripting",
     "tabs"
   ],
   "host_permissions": [
-    "https://*/*",
+    "https://omegle.com/*",
+    "https://www.omegle.com/*",
+    "https://ometv.com/*",
+    "https://www.ometv.com/*",
+    "https://chatrandom.com/*",
+    "https://www.chatrandom.com/*",
+    "https://chaturbate.com/*",
+    "https://www.chaturbate.com/*",
+    "https://tinychat.com/*",
+    "https://meet.google.com/*",
+    "https://zoom.us/*",
+    "https://teams.microsoft.com/*",
+    "https://discord.com/*",
     "http://localhost:8765/*"
   ],
   "content_scripts": [
@@ -28,7 +39,11 @@
         "*://www.chatrandom.com/*",
         "*://chaturbate.com/*",
         "*://www.chaturbate.com/*",
-        "*://tinychat.com/*"
+        "*://tinychat.com/*",
+        "*://meet.google.com/*",
+        "*://*.zoom.us/*",
+        "*://*.teams.microsoft.com/*",
+        "*://discord.com/*"
       ],
       "js": ["content-script.js"],
       "run_at": "document_end"

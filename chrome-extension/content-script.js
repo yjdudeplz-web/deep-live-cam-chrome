@@ -5,6 +5,9 @@
 
 let virtualCameraActive = false;
 let virtualStreamId = null;
+let originalGetUserMedia = null;
+let canvasStream = null;
+let streamTracks = [];
 
 // Listen for messages from the extension
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -14,6 +17,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ success: true });
   } else if (message.action === 'deactivateVirtualCamera') {
     deactivateVirtualCamera();
+    sendResponse({ success: true });
+  } else if (message.action === 'getStatus') {
+    sendResponse({ active: virtualCameraActive });
+  } else if (message.action === 'updateStream') {
+    // Update with new canvas stream
+    canvasStream = message.stream;
     sendResponse({ success: true });
   }
   return true;
@@ -27,17 +36,27 @@ function activateVirtualCamera() {
   
   console.log('[Deep-Live-Cam] Activating virtual camera...');
   
-  // Store original getUserMedia
-  const originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+  // Store original getUserMedia if not already stored
+  if (!originalGetUserMedia) {
+    originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+  }
   
   // Replace with virtual camera
   navigator.mediaDevices.getUserMedia = async function(constraints) {
-    console.log('[Deep-Live-Cam] getUserMedia intercepted');
+    console.log('[Deep-Live-Cam] getUserMedia intercepted with constraints:', constraints);
     
-    // If we have a virtual stream ID, try to use it
+    // If we have a canvas stream, use it
+    if (canvasStream) {
+      console.log('[Deep-Live-Cam] Using canvas stream');
+      // Clone the stream so we can track it
+      const clonedStream = canvasStream.clone();
+      streamTracks = clonedStream.getVideoTracks();
+      return clonedStream;
+    }
+    
+    // If we have a virtual stream ID, try to use tab capture
     if (virtualStreamId) {
       try {
-        // Use tab capture for the extension's face-swap page
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: false,
           video: {
@@ -47,20 +66,21 @@ function activateVirtualCamera() {
             }
           }
         });
-        console.log('[Deep-Live-Cam] Using virtual camera stream');
+        console.log('[Deep-Live-Cam] Using tab capture stream');
+        streamTracks = stream.getVideoTracks();
         return stream;
       } catch (e) {
         console.log('[Deep-Live-Cam] Tab capture failed:', e);
       }
     }
     
-    // Fallback: try to find and use the extension's canvas stream
+    // Try to find and use the extension's canvas stream
     try {
-      // Look for Deep-Live-Cam preview canvas
-      const previewCanvas = document.querySelector('canvas#preview-canvas, canvas[id*="preview"]');
-      if (previewCanvas) {
+      const previewCanvas = document.querySelector('canvas#preview-canvas, canvas[id*="face-swap"], canvas[id*="dlc"]');
+      if (previewCanvas && previewCanvas.captureStream) {
         const stream = previewCanvas.captureStream(30);
         console.log('[Deep-Live-Cam] Using canvas capture stream');
+        streamTracks = stream.getVideoTracks();
         return stream;
       }
     } catch (e) {
@@ -69,7 +89,12 @@ function activateVirtualCamera() {
     
     // Fallback to real camera
     console.log('[Deep-Live-Cam] Falling back to real camera');
-    return originalGetUserMedia(constraints);
+    try {
+      return await originalGetUserMedia(constraints);
+    } catch (e) {
+      console.error('[Deep-Live-Cam] Real camera also failed:', e);
+      throw e;
+    }
   };
   
   virtualCameraActive = true;
@@ -83,10 +108,22 @@ function activateVirtualCamera() {
 function deactivateVirtualCamera() {
   if (!virtualCameraActive) return;
   
-  // Restore original getUserMedia would require storing it
-  // For now, just remove indicators
+  console.log('[Deep-Live-Cam] Deactivating virtual camera...');
+  
+  // Stop any active stream tracks
+  streamTracks.forEach(track => {
+    try { track.stop(); } catch (e) {}
+  });
+  streamTracks = [];
+  
+  // Restore original getUserMedia
+  if (originalGetUserMedia) {
+    navigator.mediaDevices.getUserMedia = originalGetUserMedia;
+  }
+  
   virtualCameraActive = false;
   virtualStreamId = null;
+  canvasStream = null;
   removeIndicators();
 }
 

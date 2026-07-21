@@ -197,16 +197,35 @@ function setupEventListeners() {
   // Download button
   elements.downloadBtn.addEventListener('click', downloadModels);
 
-  // Open app button
+  // Open face swap app button
   elements.openAppBtn.addEventListener('click', () => {
-    chrome.tabs.create({ url: chrome.runtime.getURL('index.html') });
+    chrome.tabs.create({ url: chrome.runtime.getURL('face-swap.html') });
     window.close();
   });
 
-  // Open settings button
+  // Open settings button (uses setup page as settings)
   elements.openSettingsBtn.addEventListener('click', () => {
-    chrome.tabs.create({ url: chrome.runtime.getURL('settings.html') });
+    chrome.tabs.create({ url: chrome.runtime.getURL('setup.html') });
     window.close();
+  });
+  
+  // Open specific video chat site with face swap
+  document.querySelectorAll('[data-site]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const site = btn.dataset.site;
+      const sites = {
+        omegle: 'https://omegle.com',
+        ometv: 'https://ometv.com',
+        chatrandom: 'https://chatrandom.com'
+      };
+      if (sites[site]) {
+        await chrome.tabs.create({ url: chrome.runtime.getURL('face-swap.html') });
+        setTimeout(() => {
+          chrome.tabs.create({ url: sites[site] });
+        }, 500);
+      }
+      window.close();
+    });
   });
 }
 
