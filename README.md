@@ -133,40 +133,16 @@ deep-live-cam-extension/
 
 ---
 
-## 🤖 AI Models Required
+## 📦 Versions
 
-This extension uses AI models for real-time face swapping. You need to download them separately:
+| Version | Size | Models | Best For |
+|---------|------|--------|----------|
+| **Lite** | ~39KB | Built-in face-api.js | Low-end Chrome |
+| **Mini** | ~38KB | Manual download (~250MB) | Full features |
 
-### Required Models
-
-| Model | Size | Download |
-|-------|------|----------|
-| **inswapper_128_fp16.onnx** | ~160 MB | [HuggingFace](https://huggingface.co/hacksider/deep-live-cam/resolve/main/inswapper_128_fp16.onnx) |
-| **GFPGANv1.4.onnx** | ~40 MB | [HuggingFace](https://huggingface.co/hacksider/deep-live-cam/resolve/main/GFPGANv1.4.onnx) |
-| **buffalo_l.zip** | ~50 MB | [HuggingFace](https://huggingface.co/ashleykleynhans/inswapper/resolve/main/buffalo_l.zip) |
-
-### Installation
-
-1. Download the 3 models above
-2. Place ONNX files in `models/` folder
-3. Extract buffalo_l.zip to `models/buffalo_l/`
-
-```
-deep-live-cam-extension/
-├── models/
-│   ├── inswapper_128_fp16.onnx  ← ADD THIS (160 MB)
-│   ├── GFPGANv1.4.onnx          ← ADD THIS (40 MB)
-│   └── buffalo_l/               ← ADD THIS (extract zip)
-│       └── [face detection files]
-├── manifest.json
-└── ...
-```
-
-**Total AI Models Size: ~250 MB**
-
-### Model Sources
-- Primary: https://huggingface.co/hacksider/deep-live-cam
-- Alternative: https://huggingface.co/ashleykleynhans/inswapper
+### Lite vs Mini
+- **Lite**: Uses face-api.js (no download needed). Smaller but lower quality.
+- **Mini**: Uses ONNX models. Higher quality, requires model download.
 
 ---
 
