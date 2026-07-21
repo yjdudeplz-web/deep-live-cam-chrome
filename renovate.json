@@ -1,0 +1,36 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base",
+    "group:all",
+    "schedule:weekly"
+  ],
+  "labels": ["dependencies", "automated"],
+  "assignees": ["yjdudeplz-web"],
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "automerge": true,
+      "autoApprove": true
+    },
+    {
+      "matchManagers": ["pip_requirements", "pipfile"],
+      "groupName": "Python dependencies",
+      "labels": ["python", "dependencies"]
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
+      "labels": ["ci", "github-actions"]
+    }
+  ],
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/vendor/**",
+    "**/__pycache__/**"
+  ],
+  "ignoreDeps": [
+    "secrets",
+    "tokens"
+  ]
+}

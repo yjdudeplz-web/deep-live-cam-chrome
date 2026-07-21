@@ -1,0 +1,93 @@
+name: 'Model Version Checker'
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sundays
+  workflow_dispatch:
+    
+  # Manual trigger with inputs
+  repository_dispatch:
+    types: [check-models]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  check-models:
+    name: 'Check AI Models'
+    runs-on: ubuntu-latest
+    outputs:
+      new_versions: ${{ steps.check.outputs.new_versions }}
+    steps:
+      - name: 'Check Model Versions'
+        id: check
+        run: |
+          echo "Checking for new AI model versions..."
+          
+          # Model sources
+          HF_REPO="huggingface.co/hacksider/deep-live-cam"
+          
+          # Models to check
+          MODELS=(
+            "inswapper_128_fp16.onnx"
+            "GFPGANv1.4.onnx"
+          )
+          
+          NEW_VERSIONS=""
+          
+          for model in "${MODELS[@]}"; do
+            echo "Checking $model..."
+            
+            # Get latest version info
+            API_URL="https://huggingface.co/api/models/hacksider/deep-live-cam"
+            
+            # Check if file exists and get info
+            RESPONSE=$(curl -s -I "https://huggingface.co/hacksider/deep-live-cam/resolve/main/$model" 2>/dev/null)
+            
+            if echo "$RESPONSE" | grep -q "200"; then
+              echo "  ✅ $model - Available"
+            else
+              echo "  ⚠️ $model - Not found"
+              NEW_VERSIONS="$NEW_VERSIONS\n- $model: Check HuggingFace"
+            fi
+          done
+          
+          # Output result
+          echo "new_versions=$NEW_VERSIONS" >> $GITHUB_OUTPUT
+          
+          if [ -z "$NEW_VERSIONS" ]; then
+            echo "All models are up to date! ✅"
+          else
+            echo "Some models need attention:$NEW_VERSIONS"
+          fi
+
+  create-issue:
+    name: 'Create Update Issue'
+    needs: check-models
+    runs-on: ubuntu-latest
+    if: needs.check-models.outputs.new_versions != ''
+    steps:
+      - name: 'Create Issue'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const newVersions = `${{ needs.check-models.outputs.new_versions }}`;
+            
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🤖 AI Model Update Available',
+              body: `## AI Model Update Check\n\n` +
+                `New versions may be available for AI models.\n\n` +
+                `### Models to Update\n` +
+                newVersions + `\n\n` +
+                `### Update Instructions\n\n` +
+                `1. Visit [HuggingFace Repository](https://huggingface.co/hacksider/deep-live-cam)\n` +
+                `2. Download updated models\n` +
+                `3. Test with new models\n` +
+                `4. Update extension if needed\n\n` +
+                `---\n` +
+                `*This issue was auto-created by the Model Version Checker*`,
+              labels: ['ai', 'enhancement', 'automated']
+            });

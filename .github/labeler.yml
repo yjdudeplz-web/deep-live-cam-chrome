@@ -1,0 +1,44 @@
+# Labeler configuration for auto-labeling PRs
+
+# Chrome Extension changes
+chrome-extension:
+  - changed-files:
+      - any-glob: ['chrome-extension/**/*']
+      - any-glob: ['*.html', '*.js', '*.css', 'manifest.json']
+
+# Documentation changes
+documentation:
+  - changed-files:
+      - any-glob: ['**/*.md']
+      - any-glob: ['docs/**/*']
+
+# CI/CD changes
+ci:
+  - changed-files:
+      - any-glob: ['.github/workflows/**/*']
+      - any-glob: ['.github/**/*.yml']
+
+# Docker changes
+docker:
+  - changed-files:
+      - any-glob: ['Dockerfile*']
+      - any-glob: ['docker-compose*']
+      - any-glob: ['.dockerignore']
+
+# Python code changes
+python:
+  - changed-files:
+      - any-glob: ['**/*.py']
+
+# Models/AI changes
+ai:
+  - changed-files:
+      - any-glob: ['models/**/*']
+      - any-glob: ['modules/**/*']
+
+# UI/Frontend changes
+ui:
+  - changed-files:
+      - any-glob: ['**/*.html']
+      - any-glob: ['**/*.css']
+      - any-glob: ['**/*.js']

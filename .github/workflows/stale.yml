@@ -1,0 +1,61 @@
+name: 'Stale Bot'
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Run daily at midnight
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          
+          # Stale settings
+          days-before-stale: 30
+          days-before-close: 14
+          stale-issue-label: 'stale'
+          stale-issue-message: |
+            👋 This issue has been marked as stale because it has been open for 30 days with no activity.
+            
+            If you think this issue is still relevant, please comment to keep it open.
+            Otherwise, it will be closed in 14 days.
+            
+            ---
+            *This was an automated message from the stale bot.*
+            
+          stale-pr-label: 'stale'
+          stale-pr-message: |
+            👋 This PR has been marked as stale because it has been open for 30 days with no activity.
+            
+            If you're still working on this, please comment to keep it open.
+            Otherwise, it will be closed in 14 days.
+            
+            ---
+            *This was an automated message from the stale bot.*
+            
+          close-issue-message: |
+            ❌ This issue has been closed as it was marked as stale and had no recent activity.
+            
+            If you still want to address this issue, please open a new one.
+            
+            ---
+            *This was an automated message from the stale bot.*
+            
+          close-pr-message: |
+            ❌ This PR has been closed as it was marked as stale and had no recent activity.
+            
+            If you still want to merge this PR, please open a new one.
+            
+            ---
+            *This was an automated message from the stale bot.*
+            
+          # Only mark issues, not PRs initially
+          operations-per-run: 100
+          remove-stale-when-updated: true
+          debug-only: false

@@ -1,0 +1,126 @@
+# Release Drafter Template
+# https://github.com/release-drafter/release-drafter
+
+name: Release Drafter
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    types: [opened, reopened, synchronize]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  update_release_draft:
+    name: 'Update Release Draft'
+    runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_dispatch' || inputs.version
+    steps:
+      - name: 'Draft Release'
+        uses: release-drafter/release-drafter@v6
+        with:
+          config-name: release-drafter.yml
+          version: ${{ inputs.version || '' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+---
+# Release Drafter Configuration
+
+template: |
+  ## What's Changed
+  
+  $CHANGES
+
+  ## Downloads
+  
+  | Version | Description |
+  |---------|-------------|
+  | Lite | Built-in face-api.js - no download needed |
+  | Mini | Full ONNX models (~250MB) |
+
+  ---
+  **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ github.event.pull_request.base.sha }}...HEAD
+  
+  *Made with ❤️ for Chrome OS users*
+
+categories:
+  - title: '🚀 Features'
+    labels:
+      - feature
+      - enhancement
+      - enhancement-request
+  - title: '🐛 Bug Fixes'
+    labels:
+      - bug
+      - fix
+      - bugfix
+  - title: '📚 Documentation'
+    labels:
+      - documentation
+      - docs
+  - title: '🔧 Maintenance'
+    labels:
+      - ci
+      - dependencies
+      - chore
+      - maintenance
+  - title: '🎨 UI/UX'
+    labels:
+      - ui
+      - ux
+      - frontend
+  - title: '🤖 AI/ML'
+    labels:
+      - ai
+      - model
+      - machine-learning
+
+change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
+
+change-title-escapes: '\<*_&'+'"`'
+
+# Tag prefix for release
+version-resolver:
+  major:
+    - breaking-change
+  minor:
+    - feature
+    - enhancement
+  patch:
+    - bugfix
+    - bug
+    - chore
+    - documentation
+
+# Auto-label PRs
+autolabeler:
+  - label: 'breaking-change'
+    title:
+      - '/breaking/i'
+  - label: 'feature'
+    title:
+      - '/^feat/i'
+  - label: 'bug'
+    title:
+      - '/^fix/i'
+  - label: 'documentation'
+    title:
+      - '/^docs/i'
+      - '/^doc/i'
+
+# Exclude certain PRs from changelog
+exclude-labels:
+  - 'skip-changelog'
+  - 'skip-release'
+  - 'no-release'

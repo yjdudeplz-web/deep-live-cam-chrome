@@ -1,26 +1,34 @@
 ***[Remove this]The issue would be closed without notice and be considered spam if the template is not followed.***
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+## 🐛 Bug Description
+A clear description of the bug.
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+## 🔄 Steps to Reproduce
+1. Go to '...'
+2. Click on '...'
+3. See error
 
-**Error Message**
+## ✅ Expected Behavior
+What should happen.
 
-`<The error message in terminal>`
+## ❌ Actual Behavior
+What actually happens.
 
-**Desktop (please complete the following information):**
- - OS: [e.g. Windows]
- - Version [e.g. 22]
- - GPU
- - CPU
+## 📸 Screenshots
+If applicable, add screenshots.
 
-**Additional context**
-Add any other context about the problem here.
+## 💻 System Information
+- **Browser**: 
+- **OS**: 
+- **Extension Version**: 
+- **GPU**: 
+- **CPU**: 
 
-**Confirmation (Mandatory)**
-- [ ] I have followed the template
-- [ ] This is not a query about how to increase performance
-- [ ] I have checked the issues page, and this is not a duplicate
+## 📋 Additional Context
+Any other context about the problem.
+
+## ✅ Confirmation
+- [ ] I followed the template
+- [ ] This is not a duplicate
+- [ ] I've checked existing issues
 

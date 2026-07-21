@@ -1,4 +1,63 @@
-# Collaboration Guidelines and Codebase Quality Standards
+# Contributing to Deep-Live-Cam Chrome Edition 🛠️
+
+Thank you for your interest in contributing! 🎉
+
+## 📋 Ways to Contribute
+
+- 🐛 Report bugs
+- 💡 Suggest features
+- 📖 Improve documentation
+- 🔧 Submit pull requests
+- ⭐ Star the repo
+
+## 🚀 Quick Start
+
+```bash
+# Fork the repo
+git clone https://github.com/yjdudeplz-web/deep-live-cam-chrome.git
+cd deep-live-cam-chrome
+
+# Create a branch
+git checkout -b feature/your-feature-name
+
+# Make changes and commit
+git commit -m "feat: add your feature"
+
+# Push and create PR
+git push origin feature/your-feature-name
+```
+
+## 📝 Pull Request Guidelines
+
+1. **Branch naming**: 
+   - `feature/` for new features
+   - `fix/` for bug fixes
+   - `docs/` for documentation
+   - `chore/` for maintenance
+
+2. **Commit messages**: Use [Conventional Commits](https://www.conventionalcommits.org/)
+
+3. **PR Description**: Fill out the PR template
+
+4. **Testing**: Ensure changes work correctly
+
+## 🧪 Testing
+
+Before submitting:
+- [ ] Test extension loads in Chrome
+- [ ] Test face swap functionality
+- [ ] No console errors
+
+## 📦 Version Structure
+
+| Version | Use Case |
+|---------|----------|
+| Lite | Low-end devices, no model download |
+| Mini | Full features, ONNX models (~250MB) |
+
+---
+
+## Collaboration Guidelines and Codebase Quality Standards
 
 To ensure smooth collaboration and maintain the high quality of our codebase, please adhere to the following guidelines:
 

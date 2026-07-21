@@ -1,0 +1,27 @@
+# CODEOWNERS - Auto-request reviews from these people
+
+# Default owner for everything
+* @yjdudeplz-web
+
+# Chrome Extension changes
+chrome-extension/**/* @yjdudeplz-web
+*.html @yjdudeplz-web
+*.js @yjdudeplz-web
+*.css @yjdudeplz-web
+manifest.json @yjdudeplz-web
+
+# CI/CD
+.github/workflows/* @yjdudeplz-web
+.github/ISSUE_TEMPLATE/* @yjdudeplz-web
+
+# Docker
+Dockerfile* @yjdudeplz-web
+docker-compose* @yjdudeplz-web
+
+# Documentation
+*.md @yjdudeplz-web
+README* @yjdudeplz-web
+
+# Python code
+*.py @yjdudeplz-web
+modules/**/* @yjdudeplz-web
