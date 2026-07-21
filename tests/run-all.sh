@@ -31,6 +31,8 @@ run_test() {
 run_test "Manifest Tests" "tests/test_manifest.js"
 run_test "Face Swap Engine Tests" "tests/test_face_swap_engine.js"
 run_test "Integration Tests" "tests/test_integration.js"
+run_test "Error Handling Tests" "tests/test_error_handling.js"
+run_test "Edge Case Tests" "tests/test_edge_cases.js"
 
 # Summary
 echo ""

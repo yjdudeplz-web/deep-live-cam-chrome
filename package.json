@@ -8,8 +8,11 @@
     "test:manifest": "node tests/test_manifest.js",
     "test:engine": "node tests/test_face_swap_engine.js",
     "test:integration": "node tests/test_integration.js",
+    "test:error": "node tests/test_error_handling.js",
+    "test:edge": "node tests/test_edge_cases.js",
     "build": "python3 build/build.py",
-    "lint": "eslint chrome-extension/*.js",
+    "lint": "bash scripts/ci-lint.sh",
+    "health": "bash scripts/health-check.sh",
     "validate": "node tests/test_manifest.js",
     "serve": "python3 -m http.server 8080"
   },
