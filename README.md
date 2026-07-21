@@ -1,11 +1,15 @@
 <h1 align="center">
-  <img src="https://raw.githubusercontent.com/yjdudeplz-web/deep-live-cam-chrome/main/media/demo.gif" width="200" alt="🎭">
+  <img src="https://raw.githubusercontent.com/hacksider/deep-live-cam/main/media/demo.gif" width="600" alt="Deep-Live-Cam Demo">
 </h1>
 
 <h1 align="center">Deep-Live-Cam Chrome Edition</h1>
 
 <p align="center">
-  <b>🎭 Real-time face swap for everyone. Works on Chrome OS, low-end devices, and all video chat sites.</b>
+  <b>🎭 Real-time face swap and one-click video deepfake with only a single image - Now in Chrome!</b>
+</p>
+
+<p align="center">
+  <i>Based on the original <a href="https://github.com/hacksider/Deep-Live-Cam">hacksider/Deep-Live-Cam</a> (95K+ ⭐)</i>
 </p>
 
 <p align="center">
