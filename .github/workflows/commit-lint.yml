@@ -1,0 +1,94 @@
+name: 'Commit Lint'
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  commit-lint:
+    name: 'Validate Commit Messages'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 'Lint Commits'
+        run: |
+          # Get commit range
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            RANGE="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          else
+            RANGE="origin/main..HEAD"
+          fi
+          
+          echo "Checking commits in range: $RANGE"
+          
+          # Check commit messages
+          INVALID=0
+          
+          while IFS= read -r commit; do
+            SHA=$(echo "$commit" | cut -d' ' -f1)
+            MSG=$(echo "$commit" | cut -d' ' -f2-)
+            
+            echo "Checking: ${SHA:0:7} - $MSG"
+            
+            # Check for conventional commit format
+            if ! echo "$MSG" | grep -qE '^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?: .'; then
+              echo "⚠️ Non-conventional commit: $MSG"
+              # Allow merge commits and dependabot
+              if ! echo "$MSG" | grep -qE '^(Merge|fixup!|squash!|Bump|Update)'; then
+                INVALID=$((INVALID + 1))
+              fi
+            else
+              echo "✅ Conventional commit"
+            fi
+          done < <(git log "$RANGE" --format="%H %s" 2>/dev/null)
+          
+          if [ $INVALID -gt 0 ]; then
+            echo ""
+            echo "❌ Found $INVALID non-conventional commits"
+            echo "Please follow conventional commits format:"
+            echo "  feat: add new feature"
+            echo "  fix: bug fix"
+            echo "  docs: documentation"
+            echo "  style: formatting"
+            echo "  refactor: code refactoring"
+            echo "  test: adding tests"
+            echo "  chore: maintenance"
+          else
+            echo ""
+            echo "✅ All commits follow conventional format!"
+          fi
+
+  pr-title-lint:
+    name: 'Validate PR Title'
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: 'Lint PR Title'
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          
+          echo "PR Title: $TITLE"
+          
+          # Check conventional commit format
+          if echo "$TITLE" | grep -qE '^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?: .'; then
+            echo "✅ PR title follows conventional commits"
+          else
+            echo "⚠️ PR title should follow conventional commits format"
+            echo "   Format: type(scope): description"
+            echo "   Example: feat(chrome-extension): add new feature"
+          fi
+          
+          # Check for issue reference
+          if echo "$TITLE" | grep -qE '#\d+'; then
+            echo "✅ PR references an issue"
+          else
+            echo "ℹ️ Consider adding issue reference (e.g., #123)"
+          fi

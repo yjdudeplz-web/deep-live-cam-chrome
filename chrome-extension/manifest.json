@@ -68,13 +68,14 @@
     "type": "module"
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self' 'wasm-unsafe-eval' blob:; object-src 'self' blob:; style-src 'self' 'unsafe-inline'; connect-src 'self' https://huggingface.co https://*.huggingface.co http://localhost:8765"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval' blob: https://cdn.jsdelivr.net; object-src 'self' blob:; style-src 'self' 'unsafe-inline'; connect-src 'self' https://huggingface.co https://*.huggingface.co https://cdn.jsdelivr.net http://localhost:8765; worker-src 'self' blob:"
   },
   "offline_enabled": true,
   "web_accessible_resources": [
     {
-      "resources": ["models/*", "*.wasm", "*.pyodide"],
+      "resources": ["models/*", "icons/*"],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "minimum_chrome_version": "102"
 }

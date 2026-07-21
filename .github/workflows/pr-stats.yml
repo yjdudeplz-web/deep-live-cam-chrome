@@ -1,0 +1,199 @@
+name: 'PR Stats & Comments'
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+  pull_request_review:
+    types: [submitted]
+  issue_comment:
+    types: [created, deleted]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  pr-stats:
+    name: 'PR Statistics'
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: 'Calculate PR Stats'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            
+            // Get diff stats
+            const { data: diffData } = await github.rest.repos.compareCommitsWithBasehead({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              basehead: `${pr.base.sha}...${pr.head.sha}`
+            });
+            
+            const additions = diffData.additions || 0;
+            const deletions = diffData.deletions || 0;
+            const files = diffData.files?.length || 0;
+            
+            // Get commit count
+            const commits = await github.rest.pulls.listCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number
+            });
+            
+            // Get review count
+            const reviews = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number
+            });
+            
+            // Calculate time
+            const created = new Date(pr.created_at);
+            const now = new Date();
+            const hoursOld = Math.round((now - created) / (1000 * 60 * 60));
+            
+            // Post stats comment
+            const statsComment = `## 📊 PR Statistics\n\n` +
+              `| Metric | Value |\n` +
+              `|--------|-------|\n` +
+              `| 📁 Files Changed | ${files} |\n` +
+              `| ➕ Additions | +${additions} |\n` +
+              `| ➖ Deletions | -${deletions} |\n` +
+              `| 📝 Commits | ${commits.data.length} |\n` +
+              `| 👀 Reviews | ${reviews.data.length} |\n` +
+              `| ⏱️ Age | ${hoursOld} hours |\n\n` +
+              `**Complexity:** ${files > 10 ? '⚠️ High' : files > 5 ? '🟡 Medium' : '✅ Low'}\n\n` +
+              `**Risk Level:** ${additions > 500 ? '⚠️ High' : additions > 100 ? '🟡 Medium' : '✅ Low'}`;
+            
+            // Find and update or create stats comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number
+            });
+            
+            const statsExisting = comments.data.find(c => c.body.includes('📊 PR Statistics'));
+            
+            if (statsExisting) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: statsExisting.id,
+                body: statsComment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: statsComment
+              });
+            }
+
+  pr-ready:
+    name: 'Check PR Ready'
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: 'Check PR Status'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            
+            // Checklist
+            const checks = [];
+            
+            // Has description
+            if (pr.body && pr.body.length > 20) {
+              checks.push('✅ PR has description');
+            } else {
+              checks.push('⚠️ PR needs description');
+            }
+            
+            // Has commits
+            if (pr.commits > 0) {
+              checks.push(`✅ Has ${pr.commits} commits`);
+            }
+            
+            // Base branch
+            if (pr.base.ref === 'main') {
+              checks.push('✅ Targets main branch');
+            } else {
+              checks.push(`ℹ️ Targets ${pr.base.ref} branch`);
+            }
+            
+            // Draft status
+            if (pr.draft) {
+              checks.push('📝 PR is draft');
+            } else {
+              checks.push('✅ PR is ready for review');
+            }
+            
+            // Post ready check
+            const checkComment = `## ✅ PR Checklist\n\n${checks.join('\n')}`;
+            
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number
+            });
+            
+            const checkExisting = comments.data.find(c => c.body.includes('✅ PR Checklist'));
+            
+            if (checkExisting) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: checkExisting.id,
+                body: checkComment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: checkComment
+              });
+            }
+
+  merge-success:
+    name: 'Merge Success'
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+    steps:
+      - name: 'Celebrate Merge'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            
+            // Find merge comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number
+            });
+            
+            // Update stats with merge info
+            const statsComment = comments.data.find(c => c.body.includes('📊 PR Statistics'));
+            if (statsComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: statsComment.id,
+                body: statsComment.body + `\n\n🎉 **Merged by @${pr.user.login}**`
+              });
+            }
+            
+            // Add merged label
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              labels: ['merged']
+            });
+            
+            console.log(`PR #${pr.number} merged!`);

@@ -1,0 +1,410 @@
+name: 'Build & Release'
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 2.1.7)'
+        required: true
+        type: string
+      skip_upload:
+        description: 'Skip GitHub upload'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  attestations: write
+
+jobs:
+  build:
+    name: 'Build Extensions'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      lite_size: ${{ steps.sizes.outputs.lite }}
+      mini_size: ${{ steps.sizes.outputs.mini }}
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+
+      - name: 'Get Version'
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+
+      - name: 'Get Dependencies'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip
+
+      - name: 'Create Build Directory'
+        run: |
+          mkdir -p build/lite/models build/mini/models
+
+      - name: 'Copy Extension Files'
+        run: |
+          cp -r chrome-extension/* build/lite/
+          cp -r chrome-extension/* build/mini/
+
+      - name: 'Create LITE Version'
+        run: |
+          cd build/lite
+          rm -rf models icons
+          
+          # Create LITE-specific manifest
+          cat > manifest.json << 'MANIFEST'
+          {
+            "manifest_version": 3,
+            "name": "Deep-Live-Cam Chrome (Lite)",
+            "version": "VERSION_PLACEHOLDER",
+            "description": "Lightweight face swap for Chrome OS - No downloads needed!",
+            "permissions": [
+              "activeTab",
+              "storage",
+              "downloads",
+              "offscreen",
+              "videoCapture",
+              "scripting",
+              "tabs"
+            ],
+            "host_permissions": [
+              "https://omegle.com/*",
+              "https://www.omegle.com/*",
+              "https://ometv.com/*",
+              "https://www.ometv.com/*",
+              "https://chatrandom.com/*",
+              "https://www.chatrandom.com/*",
+              "https://chaturbate.com/*",
+              "https://www.chaturbate.com/*",
+              "https://tinychat.com/*",
+              "https://meet.google.com/*",
+              "https://zoom.us/*",
+              "https://teams.microsoft.com/*",
+              "https://discord.com/*",
+              "http://localhost:8765/*"
+            ],
+            "content_scripts": [
+              {
+                "matches": [
+                  "*://omegle.com/*",
+                  "*://www.omegle.com/*",
+                  "*://ometv.com/*",
+                  "*://www.ometv.com/*",
+                  "*://chatrandom.com/*",
+                  "*://www.chatrandom.com/*",
+                  "*://chaturbate.com/*",
+                  "*://www.chaturbate.com/*",
+                  "*://tinychat.com/*",
+                  "*://meet.google.com/*",
+                  "*://*.zoom.us/*",
+                  "*://*.teams.microsoft.com/*",
+                  "*://discord.com/*"
+                ],
+                "js": ["content-script.js"],
+                "run_at": "document_end"
+              }
+            ],
+            "action": {
+              "default_popup": "popup.html",
+              "default_icon": {
+                "16": "icons/icon16.png",
+                "48": "icons/icon48.png",
+                "128": "icons/icon128.png"
+              }
+            },
+            "icons": {
+              "16": "icons/icon16.png",
+              "48": "icons/icon48.png",
+              "128": "icons/icon128.png",
+              "256": "icons/icon256.png"
+            },
+            "background": {
+              "service_worker": "service-worker.js",
+              "type": "module"
+            },
+            "content_security_policy": {
+              "extension_pages": "script-src 'self' 'wasm-unsafe-eval' blob: https://cdn.jsdelivr.net; object-src 'self' blob:; style-src 'self' 'unsafe-inline'; connect-src 'self' https://huggingface.co https://*.huggingface.co https://cdn.jsdelivr.net http://localhost:8765; worker-src 'self' blob:"
+            },
+            "offline_enabled": true,
+            "minimum_chrome_version": "102"
+          }
+          MANIFEST
+          
+          sed -i "s/VERSION_PLACEHOLDER/${{ steps.version.outputs.version }}/" manifest.json
+          
+          # Create README
+          cat > models.md << 'README'
+          # LITE Version
+          
+          Uses built-in face-api.js for face detection - no model download needed!
+          
+          ## Features
+          - ✅ Face detection (built-in)
+          - ✅ Real-time processing
+          - ✅ Optimized for low-end devices
+          
+          ## Requirements
+          - Chrome 102+
+          - 2GB RAM minimum
+          - No additional downloads required
+          README
+
+      - name: 'Create MINI Version'
+        run: |
+          cd build/mini
+          
+          # Create MINI-specific manifest
+          cat > manifest.json << 'MANIFEST'
+          {
+            "manifest_version": 3,
+            "name": "Deep-Live-Cam Chrome (Mini)",
+            "version": "VERSION_PLACEHOLDER",
+            "description": "Full-featured face swap for Chrome OS with AI models",
+            "permissions": [
+              "activeTab",
+              "storage",
+              "downloads",
+              "offscreen",
+              "videoCapture",
+              "scripting",
+              "tabs"
+            ],
+            "host_permissions": [
+              "https://omegle.com/*",
+              "https://www.omegle.com/*",
+              "https://ometv.com/*",
+              "https://www.ometv.com/*",
+              "https://chatrandom.com/*",
+              "https://www.chatrandom.com/*",
+              "https://chaturbate.com/*",
+              "https://www.chaturbate.com/*",
+              "https://tinychat.com/*",
+              "https://meet.google.com/*",
+              "https://zoom.us/*",
+              "https://teams.microsoft.com/*",
+              "https://discord.com/*",
+              "http://localhost:8765/*"
+            ],
+            "content_scripts": [
+              {
+                "matches": [
+                  "*://omegle.com/*",
+                  "*://www.omegle.com/*",
+                  "*://ometv.com/*",
+                  "*://www.ometv.com/*",
+                  "*://chatrandom.com/*",
+                  "*://www.chatrandom.com/*",
+                  "*://chaturbate.com/*",
+                  "*://www.chaturbate.com/*",
+                  "*://tinychat.com/*",
+                  "*://meet.google.com/*",
+                  "*://*.zoom.us/*",
+                  "*://*.teams.microsoft.com/*",
+                  "*://discord.com/*"
+                ],
+                "js": ["content-script.js"],
+                "run_at": "document_end"
+              }
+            ],
+            "action": {
+              "default_popup": "popup.html",
+              "default_icon": {
+                "16": "icons/icon16.png",
+                "48": "icons/icon48.png",
+                "128": "icons/icon128.png"
+              }
+            },
+            "icons": {
+              "16": "icons/icon16.png",
+              "48": "icons/icon48.png",
+              "128": "icons/icon128.png",
+              "256": "icons/icon256.png"
+            },
+            "background": {
+              "service_worker": "service-worker.js",
+              "type": "module"
+            },
+            "content_security_policy": {
+              "extension_pages": "script-src 'self' 'wasm-unsafe-eval' blob: https://cdn.jsdelivr.net; object-src 'self' blob:; style-src 'self' 'unsafe-inline'; connect-src 'self' https://huggingface.co https://*.huggingface.co https://cdn.jsdelivr.net http://localhost:8765; worker-src 'self' blob:"
+            },
+            "offline_enabled": true,
+            "web_accessible_resources": [
+              {
+                "resources": ["models/*", "icons/*"],
+                "matches": ["<all_urls>"]
+              }
+            ],
+            "minimum_chrome_version": "102"
+          }
+          MANIFEST
+          
+          sed -i "s/VERSION_PLACEHOLDER/${{ steps.version.outputs.version }}/" manifest.json
+          
+          # Create models README
+          cat > models/README.md << 'README'
+          # MINI Version - AI Models Required
+          
+          Download these models from HuggingFace for full-quality face swapping:
+          
+          ## Required Models
+          
+          | Model | Size | Download |
+          |-------|------|----------|
+          | inswapper_128_fp16.onnx | ~160MB | [HuggingFace](https://huggingface.co/hacksider/deep-live-cam/resolve/main/inswapper_128_fp16.onnx) |
+          | GFPGANv1.4.onnx | ~40MB | [HuggingFace](https://huggingface.co/hacksider/deep-live-cam/resolve/main/GFPGANv1.4.onnx) |
+          | buffalo_l.zip | ~50MB | [HuggingFace](https://huggingface.co/ashleykleynhans/inswapper/resolve/main/buffalo_l.zip) |
+          
+          ## Installation
+          
+          1. Download all 3 files above
+          2. Place ONNX files in this folder
+          3. Extract buffalo_l.zip contents here
+          4. Total size: ~250MB
+          
+          ## Features
+          - ✅ Full-quality face swapping
+          - ✅ Face enhancement
+          - ✅ High resolution support
+          README
+
+      - name: 'Create ZIP Archives'
+        run: |
+          cd build
+          zip -r "deep-live-cam-chrome-${{ steps.version.outputs.version }}-lite.zip" lite/
+          zip -r "deep-live-cam-chrome-${{ steps.version.outputs.version }}-mini.zip" mini/
+          
+          echo "Build artifacts:"
+          ls -lh *.zip
+
+      - name: 'Calculate Sizes'
+        id: sizes
+        run: |
+          LITE_SIZE=$(du -sh build/deep-live-cam-chrome-${{ steps.version.outputs.version }}-lite.zip | cut -f1)
+          MINI_SIZE=$(du -sh build/deep-live-cam-chrome-${{ steps.version.outputs.version }}-mini.zip | cut -f1)
+          echo "lite=$LITE_SIZE" >> $GITHUB_OUTPUT
+          echo "mini=$MINI_SIZE" >> $GITHUB_OUTPUT
+
+      - name: 'Upload Artifacts'
+        uses: actions/upload-artifact@v4
+        with:
+          name: deep-live-cam-chrome-${{ steps.version.outputs.version }}
+          path: |
+            build/*.zip
+          retention-days: 30
+
+      - name: 'Create Checksums'
+        run: |
+          cd build
+          sha256sum *.zip > checksums.txt
+          cat checksums.txt
+
+      - name: 'Upload Checksums'
+        uses: actions/upload-artifact@v4
+        with:
+          name: checksums-${{ steps.version.outputs.version }}
+          path: build/checksums.txt
+          retention-days: 365
+
+      - name: 'Create GitHub Release'
+        if: ${{ inputs.skip_upload != true }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: Deep-Live-Cam Chrome ${{ steps.version.outputs.version }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            build/deep-live-cam-chrome-${{ steps.version.outputs.version }}-lite.zip
+            build/deep-live-cam-chrome-${{ steps.version.outputs.version }}-mini.zip
+            build/checksums.txt
+          body: |
+            ## Downloads
+
+            | Version | Size | Description |
+            |---------|------|-------------|
+            | **Lite** | ${{ steps.sizes.outputs.lite }} | Built-in face-api.js - no download needed |
+            | **Mini** | ${{ steps.sizes.outputs.mini }} | Full ONNX models (~250MB) |
+
+            ## LITE vs MINI
+
+            ### LITE (Recommended for most users)
+            - Uses face-api.js (built-in, no download)
+            - Smaller size (~40KB)
+            - Works immediately
+            - Optimized for low-end Chrome devices
+
+            ### MINI (For highest quality)
+            - Uses ONNX models for best quality
+            - Requires ~250MB model download
+            - Face enhancement enabled
+            - Best for high-end devices
+
+            ## Model Downloads (Mini only)
+
+            If using MINI, download AI models from:
+            - https://huggingface.co/hacksider/deep-live-cam
+
+            ## Installation
+
+            1. Download LITE or MINI
+            2. Extract the ZIP
+            3. Go to `chrome://extensions/`
+            4. Enable Developer mode
+            5. Click "Load unpacked"
+            6. Select the extracted folder
+
+            ---
+            Made with ❤️ for Chrome OS users
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 'Summary'
+        run: |
+          echo "## Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | Size |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| LITE | ${{ steps.sizes.outputs.lite }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| MINI | ${{ steps.sizes.outputs.mini }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Artifacts uploaded!" >> $GITHUB_STEP_SUMMARY
+
+  validate:
+    name: 'Validate Extension'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+
+      - name: 'Download Artifacts'
+        uses: actions/download-artifact@v4
+        with:
+          name: deep-live-cam-chrome-${{ needs.build.outputs.version }}
+
+      - name: 'Install Chrome Extension Validator'
+        run: |
+          npm install -g chrome-extension-cli
+
+      - name: 'Validate ZIP Files'
+        run: |
+          echo "Validating LITE..."
+          unzip -q deep-live-cam-chrome-${{ needs.build.outputs.version }}-lite.zip -d lite-test
+          
+          echo "Validating MINI..."
+          unzip -q deep-live-cam-chrome-${{ needs.build.outputs.version }}-mini.zip -d mini-test
+          
+          echo "✅ Both versions validated!"
+          ls -la lite-test/ mini-test/

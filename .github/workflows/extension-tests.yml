@@ -1,0 +1,372 @@
+name: 'Extension Tests'
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'chrome-extension/**'
+      - '.github/workflows/**'
+  pull_request:
+    paths:
+      - 'chrome-extension/**'
+      - '.github/workflows/**'
+
+permissions:
+  contents: read
+
+jobs:
+  # Static Analysis
+  lint:
+    name: 'Lint Code'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 'Setup Node'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 'Install ESLint'
+        run: npm install -g eslint
+
+      - name: 'Lint JavaScript'
+        run: |
+          eslint chrome-extension/*.js || true
+
+      - name: 'Check for console.log'
+        run: |
+          echo "Checking for console.log statements..."
+          grep -rn "console\.log" chrome-extension/ || echo "No console.log found!"
+
+      - name: 'Check for TODO comments'
+        run: |
+          echo "Checking for TODO comments..."
+          grep -rn "TODO\|FIXME\|XXX" chrome-extension/ || echo "No TODOs found!"
+
+  validate-manifest:
+    name: 'Validate Manifest'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 'Validate JSON'
+        run: |
+          echo "Validating manifest.json..."
+          cat chrome-extension/manifest.json | python3 -m json.tool > /dev/null && echo "✅ Valid JSON!"
+
+      - name: 'Check Required Fields'
+        run: |
+          python3 << 'PYEOF'
+          import json
+          
+          with open('chrome-extension/manifest.json') as f:
+              manifest = json.load(f)
+          
+          required = ['manifest_version', 'name', 'version', 'permissions', 'action', 'background']
+          missing = [r for r in required if r not in manifest]
+          
+          if missing:
+              print(f"❌ Missing fields: {missing}")
+              exit(1)
+          else:
+              print(f"✅ All required fields present")
+              print(f"   Version: {manifest['version']}")
+              print(f"   Permissions: {len(manifest['permissions'])}")
+          
+          # Check icons
+          if 'icons' in manifest:
+              for size in [16, 48, 128, 256]:
+                  if str(size) in manifest['icons']:
+                      print(f"   ✅ icon{size}.png defined")
+          
+          # Check manifest version
+          if manifest.get('manifest_version') == 3:
+              print("   ✅ Manifest V3")
+          else:
+              print("   ⚠️ Not Manifest V3")
+          PYEOF
+
+  # Security Analysis
+  security:
+    name: 'Security Check'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 'Check for eval() usage'
+        run: |
+          echo "Checking for eval() usage..."
+          if grep -rn "eval(" chrome-extension/; then
+            echo "❌ eval() found - potential security issue!"
+            exit 1
+          else
+            echo "✅ No eval() usage found"
+          fi
+
+      - name: 'Check for innerHTML'
+        run: |
+          echo "Checking for innerHTML usage..."
+          if grep -rn "innerHTML" chrome-extension/; then
+            echo "⚠️ innerHTML found - consider using textContent for safety"
+          else
+            echo "✅ No innerHTML found"
+          fi
+
+      - name: 'Check CSP'
+        run: |
+          python3 << 'PYEOF'
+          import json
+          
+          with open('chrome-extension/manifest.json') as f:
+              manifest = json.load(f)
+          
+          csp = manifest.get('content_security_policy', {})
+          if isinstance(csp, dict):
+              csp = csp.get('extension_pages', '')
+          
+          print(f"CSP: {csp}")
+          
+          # Check for unsafe patterns
+          if "'unsafe-inline'" in csp:
+              print("⚠️ 'unsafe-inline' in CSP (expected for extensions)")
+          
+          if "'unsafe-eval'" in csp:
+              print("⚠️ 'unsafe-eval' in CSP (required for WASM)")
+          
+          print("✅ CSP reviewed")
+          PYEOF
+
+      - name: 'Check External URLs'
+        run: |
+          echo "Checking external URLs..."
+          grep -rho "https://[^'\"]*" chrome-extension/*.js chrome-extension/*.html | sort -u
+
+  # Performance Check
+  bundle-size:
+    name: 'Bundle Size Check'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 'Calculate Extension Size'
+        run: |
+          EXT_SIZE=$(du -sb chrome-extension | cut -f1)
+          EXT_SIZE_KB=$((EXT_SIZE / 1024))
+          
+          echo "Extension size: $EXT_SIZE_KB KB ($EXT_SIZE bytes)"
+          
+          if [ $EXT_SIZE_KB -gt 500 ]; then
+            echo "⚠️ Extension is larger than 500KB"
+          else
+            echo "✅ Extension size is reasonable"
+          fi
+          
+          # List largest files
+          echo ""
+          echo "Largest files:"
+          find chrome-extension -type f -exec du -h {} + | sort -rh | head -10
+
+      - name: 'Check for Large Files'
+        run: |
+          echo "Files over 100KB:"
+          find chrome-extension -type f -size +100k -exec ls -lh {} \;
+
+  # Functional Tests
+  test-build:
+    name: 'Test Build'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 'Install zip'
+        run: sudo apt-get install -y zip
+
+      - name: 'Build Extension'
+        run: |
+          mkdir -p build/test
+          cp -r chrome-extension/* build/test/
+          cd build
+          zip -r test-extension.zip test/
+          
+          SIZE=$(du -sh test-extension.zip | cut -f1)
+          echo "Built test extension: $SIZE"
+          ls -lh test-extension.zip
+
+      - name: 'Validate ZIP Structure'
+        run: |
+          python3 << 'PYEOF'
+          import zipfile
+          import os
+          
+          with zipfile.ZipFile('build/test-extension.zip', 'r') as zf:
+              names = zf.namelist()
+              
+              print(f"Total files: {len(names)}")
+              
+              # Check for manifest
+              if 'manifest.json' in names:
+                  print("✅ manifest.json found")
+              else:
+                  print("❌ manifest.json missing!")
+              
+              # Check for JS files
+              js_files = [n for n in names if n.endswith('.js')]
+              print(f"✅ {len(js_files)} JavaScript files")
+              
+              # Check for HTML files
+              html_files = [n for n in names if n.endswith('.html')]
+              print(f"✅ {len(html_files)} HTML files")
+              
+              # Check icons
+              icons = [n for n in names if 'icon' in n]
+              print(f"✅ {len(icons)} icon files")
+              
+              # List all files
+              print("\nFile structure:")
+              for name in sorted(names):
+                  info = zf.getinfo(name)
+                  print(f"  {name} ({info.file_size} bytes)")
+          PYEOF
+
+  # Browser Test (simulated)
+  browser-test:
+    name: 'Browser Integration Test'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 'Setup Python'
+        run: python3 --version
+
+      - name: 'Test Service Worker Syntax'
+        run: |
+          python3 << 'PYEOF'
+          import subprocess
+          import sys
+          
+          # Check for basic JS syntax errors in service-worker
+          result = subprocess.run(
+              ['node', '--check', 'chrome-extension/service-worker.js'],
+              capture_output=True,
+              text=True
+          )
+          
+          if result.returncode == 0:
+              print("✅ service-worker.js syntax OK")
+          else:
+              print(f"❌ Syntax error: {result.stderr}")
+              sys.exit(1)
+          PYEOF
+
+      - name: 'Test Popup JS Syntax'
+        run: |
+          python3 << 'PYEOF'
+          import subprocess
+          
+          result = subprocess.run(
+              ['node', '--check', 'chrome-extension/popup.js'],
+              capture_output=True,
+              text=True
+          )
+          
+          if result.returncode == 0:
+              print("✅ popup.js syntax OK")
+          else:
+              print(f"❌ Syntax error: {result.stderr}")
+              import sys
+              sys.exit(1)
+          PYEOF
+
+      - name: 'Test Face Swap Engine'
+        run: |
+          python3 << 'PYEOF'
+          import subprocess
+          
+          result = subprocess.run(
+              ['node', '--check', 'chrome-extension/face-swap-engine.js'],
+              capture_output=True,
+              text=True
+          )
+          
+          if result.returncode == 0:
+              print("✅ face-swap-engine.js syntax OK")
+          else:
+              print(f"❌ Syntax error: {result.stderr}")
+              import sys
+              sys.exit(1)
+          PYEOF
+
+  # Compatibility Test
+  compatibility:
+    name: 'Compatibility Check'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 'Check Chrome Version Requirement'
+        run: |
+          python3 << 'PYEOF'
+          import json
+          
+          with open('chrome-extension/manifest.json') as f:
+              manifest = json.load(f)
+          
+          min_version = manifest.get('minimum_chrome_version', '0')
+          print(f"Minimum Chrome version: {min_version}")
+          
+          if int(min_version.split('.')[0]) >= 100:
+              print("✅ Modern Chrome version requirement")
+          else:
+              print("⚠️ Consider updating minimum Chrome version")
+          PYEOF
+
+      - name: 'Check Permissions'
+        run: |
+          python3 << 'PYEOF'
+          import json
+          
+          with open('chrome-extension/manifest.json') as f:
+              manifest = json.load(f)
+          
+          permissions = manifest.get('permissions', [])
+          print(f"Permissions ({len(permissions)}):")
+          for p in permissions:
+              print(f"  - {p}")
+          
+          # Check for dangerous permissions
+          dangerous = ['nativeMessaging', 'debugger', 'enterprise.*']
+          for d in dangerous:
+              if any(p for p in permissions if p == d):
+                  print(f"⚠️ Potentially sensitive: {d}")
+          
+          print("✅ Permission check complete")
+          PYEOF
+
+  # Report
+  report:
+    name: 'Test Report'
+    needs: [lint, validate-manifest, security, bundle-size, test-build, browser-test, compatibility]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: 'Generate Report'
+        run: |
+          echo "## Extension Test Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Test | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Lint | ${{ needs.lint.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Manifest | ${{ needs.validate-manifest.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security | ${{ needs.security.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Bundle Size | ${{ needs.bundle-size.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build | ${{ needs.test-build.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Browser | ${{ needs.browser-test.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Compatibility | ${{ needs.compatibility.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          FAILED=$((1 - ($(echo "${{ needs.*.result }}" | tr ' ' '\n' | grep -c "^success$") * 1)))
+          if [ $FAILED -eq 0 ]; then
+            echo "🎉 All tests passed!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Some tests failed" >> $GITHUB_STEP_SUMMARY

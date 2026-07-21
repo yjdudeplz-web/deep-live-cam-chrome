@@ -509,39 +509,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   }
 });
 
-// Message handler for background tasks
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  (async () => {
-    switch (message.action) {
-      // ... existing handlers ...
-      
-      case 'getHealthStatus':
-        sendResponse(await backgroundTasks.healthCheck());
-        break;
-        
-      case 'getPerformanceStats':
-        const result = await chrome.storage.local.get('performanceStats');
-        sendResponse(result.performanceStats || null);
-        break;
-        
-      case 'runBackgroundTask':
-        if (message.task && backgroundTasks[message.task]) {
-          sendResponse(await backgroundTasks[message.task]());
-        } else {
-          sendResponse({ error: 'Unknown task' });
-        }
-        break;
-        
-      case 'ping':
-        sendResponse({ pong: true, timestamp: Date.now() });
-        break;
-        
-      default:
-        sendResponse({ error: 'Unknown action' });
-    }
-  })();
-  return true;
-});
+// Note: Message handler is combined with main handler above (lines 244-331)
 
 // Initialize background tasks on startup
 async function initBackgroundTasks() {
