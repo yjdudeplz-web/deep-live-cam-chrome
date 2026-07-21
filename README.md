@@ -61,18 +61,41 @@
 
 ## ⚡ Quick Start
 
+### Option 1: Load Unpacked (Recommended)
+1. Open **Chrome** → go to `chrome://extensions/`
+2. Enable **Developer mode** (toggle in top right)
+3. Click **"Load unpacked"** button
+4. Select the **`deep-live-cam-extension-unpacked`** folder from your downloads
+5. Click the extension icon 🎭 in Chrome toolbar
+6. Click **"Open Face Swap"**
+7. Select a face image
+8. Click **LIVE** to start!
+
+### Option 2: From Source
 ```bash
-# 1. Download the latest release
+# 1. Download/clone this repository
+git clone https://github.com/yjdudeplz-web/deep-live-cam-chrome.git
+
+# 2. Open Chrome → chrome://extensions/
+# 3. Enable Developer mode
+# 4. Click "Load unpacked"
+# 5. Select the chrome-extension/ folder
+
+# 6. Click the extension icon
+# 7. Select a face image
+# 8. Click "Start Face Swap"!
+```
+
+### Option 3: From ZIP
+```bash
+# 1. Download the latest release (.zip)
 # 2. Extract the zip file
+# 3. You should see a chrome-extension/ folder
 
-# 3. Open Chrome → chrome://extensions
-# 4. Enable Developer Mode
-# 5. Click "Load unpacked"
-# 6. Select the chrome-extension folder
-
-# 7. Click the extension icon
-# 8. Select a face image
-# 9. Click "Start Face Swap"!
+# 4. Open Chrome → chrome://extensions/
+# 5. Enable Developer mode
+# 6. Click "Load unpacked"
+# 7. Select the chrome-extension/ FOLDER (not the zip)
 ```
 
 ---
